@@ -11,10 +11,10 @@ namespace WPF_Torpedo
     /// This class represents the game's row
     /// <remarks>The game's grid is 10x10 by default</remarks>
     /// </summary>
-    public class GameRow(int row, int col)
+    public class GameGrid(int row, int col)
     {
         int[,] _array = new int[row,col];
-        public GameRow() : this(10,10) 
+        public GameGrid() : this(10,10) 
         {
         }
         public int this[int row, int col] => _array[row, col];
