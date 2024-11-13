@@ -7,6 +7,11 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock FontSize="24" FontWeight="Bold" Text="Battleship Game" Margin="0,0,0,20" HorizontalAlignment="Center"/>
+            <Button Name="StartGameButton" Content="Start Game" Width="200" Height="40" Click="StartGameButton_Click" Margin="0,5"/>
+            <Button Name="InstructionsButton" Content="Instructions" Width="200" Height="40" Click="InstructionsButton_Click" Margin="0,5"/>
+            <Button Name="ExitButton" Content="Exit" Width="200" Height="40" Click="ExitButton_Click" Margin="0,5"/>
+        </StackPanel>
     </Grid>
 </Window>

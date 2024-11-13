@@ -20,5 +20,19 @@ namespace WPF_Torpedo
         {
             InitializeComponent();
         }
+        private void StartGameButton_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Starting the game...");
+        }
+
+        private void InstructionsButton_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Útmutató:\n\n- A játékosok felváltva próbálják kitalálni az ellenfél hajóinak helyét.\n- Találatot akkor jegyeznek fel, amikor egy játékos sikeresen kitalálja egy hajó helyét.\n- A játék véget ér, amikor az egyik játékos összes hajója elsüllyedt.");
+        }
+
+        private void ExitButton_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
     }
 }
