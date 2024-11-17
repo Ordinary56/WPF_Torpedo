@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Server.Tests;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -8,16 +9,17 @@ namespace Server
 {
     public class Program()
     {
-        static IHost _host = Host.CreateDefaultBuilder()
-                            .ConfigureServices(ConfigureServices)
-                            .ConfigureLogging(ConfigureLogging)
-                            .Build();
 
         public static async Task Main()
         {
+            using IHost _host = Host.CreateDefaultBuilder()
+                                    .ConfigureServices(ConfigureServices)
+                                    .ConfigureLogging(ConfigureLogging)
+                                    .Build();
             Server server = _host.Services.GetRequiredService<Server>();
-            await server.StartAsync();
-            await _host.RunAsync();
+            
+            var test = _host.Services.GetService<ITest>();
+            await Task.WhenAll(_host.RunAsync(),server.StartAsync(), test!.Test());
         }
 
         static void ConfigureLogging(HostBuilderContext context, ILoggingBuilder builder)
@@ -29,6 +31,7 @@ namespace Server
         static void ConfigureServices(HostBuilderContext context, IServiceCollection services) 
         {
             services.AddSingleton<Server>();
+            services.AddTransient<ITest, TestClientDisconnected>();
         }
 
     }
@@ -48,12 +51,12 @@ namespace Server
 
         // Logging information
         ILogger<Server> _logger;
-        public Server()
+        public Server(ILogger<Server> logger)
         {
             _listener = new(IPAddress.Parse(ADDRESS), PORT);
             _clients = [];
+            _logger = logger;
         }
-        public Server(ILogger<Server> logger) : this() { _logger = logger; }
 
         async Task<string> GetUsernameAsync(TcpClient client)
         {
