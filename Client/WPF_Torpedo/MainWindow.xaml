@@ -67,7 +67,9 @@
                    FontWeight="Bold" />
             <TextBox x:Name="txtPlayerName"
                      Width="200"
-                     Height="25"/>
+                     Height="25"
+                     VerticalContentAlignment="Center"
+                     HorizontalContentAlignment="Center"/>
         </StackPanel>
 
         <Button x:Name="btnStartGame"
