@@ -102,7 +102,7 @@ namespace WPF_Torpedo
                 }
                 else
                 {
-                    MessageBox.Show("Már az összes ilyen típusú hajót elhelyezted!");
+                    MessageBox.Show("Ezt a hajót már elhelyezted!");
                     draggedShip = null;
                 }
             }
@@ -138,7 +138,14 @@ namespace WPF_Torpedo
 
                         // Hajók számának csökkentése
                         shipsCount[shipName]--;
-                        MessageBox.Show($"{shipName} sikeresen elhelyezve! Hátralévő: {shipsCount[shipName]}");
+                        MessageBox.Show($"{shipName} sikeresen elhelyezve!");
+
+                        if (shipsCount[shipName] == 0)
+                        {
+                            Border shipBorder = this.FindName(shipName) as Border;
+                            SolidColorBrush solidColorBrush = new SolidColorBrush(Color.FromArgb(Colors.Red.A, Colors.Red.R, Colors.Red.G, Colors.Red.B));
+                            shipBorder.Background = solidColorBrush;
+                        }
                     }
                     else
                     {
@@ -154,11 +161,11 @@ namespace WPF_Torpedo
             // Ellenőrzés, hogy a hajó nem lóg ki a rácsból
             if (isVertical)
             {
-                if (row + draggedShipSize > 11) return false;
+                if (row + draggedShipSize > 10) return false;
             }
             else
             {
-                if (col + draggedShipSize > 11) return false;
+                if (col + draggedShipSize > 10) return false;
             }
 
             // Ellenőrzés, hogy a hajó nem ütközik más hajóval, vagy nem érintkezik velük
@@ -169,7 +176,7 @@ namespace WPF_Torpedo
                     int checkRow = isVertical ? row + i : row + j;
                     int checkCol = isVertical ? col + j : col + i;
 
-                    if (checkRow >= 0 && checkRow < 11 && checkCol >= 0 && checkCol < 11)
+                    if (checkRow >= 0 && checkRow < 10 && checkCol >= 0 && checkCol < 10)
                     {
                         Border targetCell = GetCell(checkRow, checkCol);
                         if (targetCell != null && targetCell.Background == Brushes.DarkGray)
