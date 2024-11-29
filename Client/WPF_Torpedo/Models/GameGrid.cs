@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-
-namespace WPF_Torpedo.Models
+﻿namespace WPF_Torpedo.Models
 {
     /// <summary>
-    /// This class represents the game's row
+    /// This class represents the game's Grid
     /// <remarks>The game's grid is 10x10 by default</remarks>
     /// </summary>
     public class GameGrid(int row, int col)
@@ -18,7 +11,12 @@ namespace WPF_Torpedo.Models
         {
         }
         public int this[int row, int col] => _array[row, col];
-
+        /// <summary>
+        /// Get's a cell from the grid
+        /// </summary>
+        /// <param name="row"> the row's index</param>
+        /// <param name="column">the column's index</param>
+        /// <returns>cell's value, -2 otherwise</returns>
         public sbyte GetCell(int row, int column)
         {
             try
@@ -40,14 +38,17 @@ namespace WPF_Torpedo.Models
             }
             _array[row, col] = -2;
         }
+        /// <summary>
+        /// Places the ship where it's only water
+        /// <para>Note: this method fails if it overlaps with a another ship or there has been a bombing</para>
+        /// <para>It's impossible to place a ship to a bombed tile because of the setup phase</para>
+        /// </summary>
+        /// <param name="ship">The ship that has to be placed</param>
         public void PlaceShip(Ship ship)
         {
-            foreach(Position position in ship.TilePositions())
+            foreach(Position position in ship.TilePositions().Where(x => this[x.X,x.Y] == 0))
             {
-                if (this[position.X,position.Y] == 0)
-                {
-                    _array[position.X, position.Y] = ship.ID;
-                }
+                _array[position.X, position.Y] = ship.ID;
             }
         }
 
