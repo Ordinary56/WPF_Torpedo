@@ -9,7 +9,7 @@
       Title="MainMenu">
 
     <Grid>
-          <Grid.ColumnDefinitions>
+        <Grid.ColumnDefinitions>
             <ColumnDefinition />
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
@@ -78,7 +78,9 @@
                 Height="35"
                 Margin="20"
                 Grid.Row="4"
-        
+                Grid.ColumnSpan="2"
+                Click="btnStartGame_Click"/>
+
         <!--
             <Button x:Name="btnLeaderboard"
                     Content="Ranglista"
