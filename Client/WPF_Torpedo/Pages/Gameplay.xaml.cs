@@ -17,7 +17,7 @@ namespace WPF_Torpedo
     /// <summary>
     /// Interaction logic for Gameplay.xaml
     /// </summary>
-    public partial class Gameplay : Window
+    public partial class Gameplay : Page
     {
         public Gameplay()
         {

@@ -8,7 +8,7 @@ using System.Windows.Media;
 
 namespace WPF_Torpedo
 {
-    public partial class CreateTable : Window
+    public partial class CreateTable : Page
     {
         private string draggedShip; // Húzott hajó neve
         private int draggedShipSize; // Húzott hajó mérete
