@@ -17,7 +17,7 @@ namespace WPF_Torpedo
             collection.AddSingleton<MainWindow>();
             collection.AddSingleton<IPageNavigator, PageNavigator>();
             collection.AddSingleton<Func<Type, Page>>(provider => page => (Page)provider.GetRequiredService(page));
-            //collection.AddSingleton<CreateTable>();
+            collection.AddSingleton<CreateTable>();
             collection.AddSingleton<Gameplay>();
             // TODO: add pages here
             _provider = collection.BuildServiceProvider();
