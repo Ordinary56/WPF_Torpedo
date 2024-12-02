@@ -9,6 +9,6 @@
         Height="550" Width="900"
         Style="{DynamicResource WindowStyle}">
     <Grid>
-        <Frame Content="{Binding Navigator.CurrentPage}"/>
+        <Frame Content="{Binding Navigator.CurrentPage}" NavigationUIVisibility="Hidden"/>
     </Grid>
 </Window>

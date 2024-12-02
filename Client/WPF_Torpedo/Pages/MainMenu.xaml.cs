@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using WPF_Torpedo.Services;
 
 namespace WPF_Torpedo.Pages
 {
@@ -20,9 +21,16 @@ namespace WPF_Torpedo.Pages
     /// </summary>
     public partial class MainMenu : Page
     {
-        public MainMenu()
+        private IPageNavigator _navigator;
+        public MainMenu(IPageNavigator navigator)
         {
             InitializeComponent();
+            _navigator = navigator;
+        }
+
+        private void btnStartGame_Click(object sender, RoutedEventArgs e)
+        {
+            _navigator.MoveToPage<CreateTable>();
         }
 
     }

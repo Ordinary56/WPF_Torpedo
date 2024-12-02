@@ -25,7 +25,7 @@ namespace WPF_Torpedo
             InitializeComponent();
             _navigator = navigator;
             DataContext = this;
-            _navigator.CurrentPage = new MainMenu();
+            _navigator.CurrentPage = new MainMenu(_navigator);
         }
     }
 }
