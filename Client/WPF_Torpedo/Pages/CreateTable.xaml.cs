@@ -60,18 +60,30 @@ namespace WPF_Torpedo
 
                     border.AllowDrop = true; // Drag-and-drop engedélyezése
                     border.Drop += Grid_Drop; // Drop esemény kezelése
+
+                    // MouseEnter event to show preview
                     border.MouseEnter += (s, e) =>
                     {
-                        if (draggedShip != null && CanPlaceShip(row, col))
+                        if (draggedShip != null)
                         {
-                            border.Background = Brushes.LightBlue; // Előnézet (csak ha elfér)
+                            // Get the current row and column of the border (cell)
+                            int currentRow = Grid.GetRow(border);
+                            int currentCol = Grid.GetColumn(border);
+
+                            // Check if the ship can be placed at this position
+                            if (CanPlaceShip(currentRow, currentCol))
+                            {
+                                border.Background = Brushes.LightBlue; // Show preview color if it can be placed
+                            }
                         }
                     };
+
+                    // MouseLeave event to reset color
                     border.MouseLeave += (s, e) =>
                     {
                         if (border.Background == Brushes.LightBlue)
                         {
-                            border.Background = Brushes.LightGray; // Vissza alapértelmezettre
+                            border.Background = Brushes.LightGray; // Reset to original color
                         }
                     };
 
@@ -127,7 +139,7 @@ namespace WPF_Torpedo
                         for (int i = 0; i < draggedShipSize; i++)
                         {
                             Border targetCell = isVertical
-                                ? GetCell(row + i, col) // Függőleges
+                                ? GetCell(row + i, col) // Fü ggőleges
                                 : GetCell(row, col + i); // Vízszintes
 
                             if (targetCell != null)
@@ -169,24 +181,26 @@ namespace WPF_Torpedo
             }
 
             // Ellenőrzés, hogy a hajó nem ütközik más hajóval, vagy nem érintkezik velük
-            for (int i = -1; i <= draggedShipSize; i++)
+            for (int i = 0; i < draggedShipSize; i++)
             {
-                for (int j = -1; j <= 1; j++)
-                {
-                    int checkRow = isVertical ? row + i : row + j;
-                    int checkCol = isVertical ? col + j : col + i;
+                int checkRow = isVertical ? row + i : row;
+                int checkCol = isVertical ? col : col + i;
 
-                    if (checkRow >= 0 && checkRow < 10 && checkCol >= 0 && checkCol < 10)
+                // Ensure we are within bounds
+                if (checkRow >= 0 && checkRow < 10 && checkCol >= 0 && checkCol < 10)
+                {
+                    Border targetCell = GetCell(checkRow, checkCol);
+                    if (targetCell != null && targetCell.Background == Brushes.DarkGray)
                     {
-                        Border targetCell = GetCell(checkRow, checkCol);
-                        if (targetCell != null && targetCell.Background == Brushes.DarkGray)
-                        {
-                            return false; // Ütközés vagy érintkezés más hajóval
-                        }
+                        return false; // Ütközés vagy érintkezés más hajóval
                     }
                 }
+                else
+                {
+                    return false; // Out of bounds
+                }
             }
-            return true;
+            return true; // No collisions, valid placement
         }
 
         // Cellák elérése a gridMain belső rácsból
