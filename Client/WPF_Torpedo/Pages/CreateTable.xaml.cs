@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using WPF_Torpedo.Models;
 
 namespace WPF_Torpedo
 {
@@ -13,6 +14,7 @@ namespace WPF_Torpedo
         private string draggedShip; // Húzott hajó neve
         private int draggedShipSize; // Húzott hajó mérete
         private bool isVertical = false; // Hajó orientáció (false = vízszintes, true = függőleges)
+        private List<ShipPlacement> placedShips = new List<ShipPlacement>();
 
         // Hajók maximális száma
         private Dictionary<string, int> shipsCount = new Dictionary<string, int>
@@ -61,22 +63,22 @@ namespace WPF_Torpedo
                     border.AllowDrop = true; // Drag-and-drop engedélyezése
                     border.Drop += Grid_Drop; // Drop esemény kezelése
 
-                    // MouseEnter event to show preview
-                    border.MouseEnter += (s, e) =>
-                    {
-                        if (draggedShip != null)
-                        {
-                            // Get the current row and column of the border (cell)
-                            int currentRow = Grid.GetRow(border);
-                            int currentCol = Grid.GetColumn(border);
+                    //// MouseEnter event to show preview
+                    //border.MouseEnter += (s, e) =>
+                    //{
+                    //    if (draggedShip != null)
+                    //    {
+                    //        // Get the current row and column of the border (cell)
+                    //        int currentRow = Grid.GetRow(border);
+                    //        int currentCol = Grid.GetColumn(border);
 
-                            // Check if the ship can be placed at this position
-                            if (CanPlaceShip(currentRow, currentCol))
-                            {
-                                border.Background = Brushes.LightBlue; // Show preview color if it can be placed
-                            }
-                        }
-                    };
+                    //        // Check if the ship can be placed at this position
+                    //        if (CanPlaceShip(currentRow, currentCol))
+                    //        {
+                    //            border.Background = Brushes.LightBlue; // Show preview color if it can be placed
+                    //        }
+                    //    }
+                    //};
 
                     // MouseLeave event to reset color
                     border.MouseLeave += (s, e) =>
@@ -120,6 +122,107 @@ namespace WPF_Torpedo
             }
         }
 
+
+        private void BtnReset_Click(object sender, RoutedEventArgs e)
+        {
+            // Reset all placed ships
+            ResetAllPlacedShips();
+
+            // Reset all ship border backgrounds to DarkCyan
+            ResetAllShipBorders();
+
+            // Reset any other relevant variables if needed (e.g., placedShips list, etc.)
+            placedShips.Clear(); // Clears the list of placed ships
+
+            // Optionally reset other UI components, e.g., ship count, etc.
+            foreach (var ship in shipsCount.Keys.ToList())
+            {
+                shipsCount[ship] = 1; // Resetting ship counts back to initial values (you can customize this)
+            }
+
+            MessageBox.Show("All ships have been reset.");
+        }
+
+        private void ResetAllShipBorders()
+        {
+            // List of all ship names you are using
+            List<string> shipNames = new List<string>
+            {
+                "AircraftCarrier",
+                "Battleship",
+                "Submarine",
+                "Cruiser",
+                "Destroyer"
+            };
+
+            // Reset each ship's border background to DarkCyan
+            foreach (var shipName in shipNames)
+            {
+                ResetShipBackground(shipName); // Reset each ship's border color
+            }
+        }
+
+        private void ResetAllPlacedShips()
+        {
+            // Loop through the list of placed ships and reset each ship's cells
+            foreach (var placedShip in placedShips.ToList()) // Make a copy of the list to iterate through it
+            {
+                for (int i = 0; i < placedShip.Size; i++)
+                {
+                    Border targetCell = placedShip.IsVertical
+                        ? GetCell(placedShip.Row + i, placedShip.Col) // Vertical
+                        : GetCell(placedShip.Row, placedShip.Col + i); // Horizontal
+
+                    if (targetCell != null)
+                    {
+                        targetCell.Background = Brushes.LightGray; // Reset to empty cell
+                    }
+                }
+            }
+
+            // Clear the placed ships list
+            placedShips.Clear();
+        }
+
+
+        private void BtnBack_Click(object sender, RoutedEventArgs e)
+        {
+            // Check if there are any placed ships to remove
+            if (placedShips.Count > 0)
+            {
+                // Get the last placed ship's details
+                ShipPlacement lastPlacedShip = placedShips.Last();
+
+                // Remove the ship's cells from the grid
+                for (int i = 0; i < lastPlacedShip.Size; i++)
+                {
+                    Border targetCell = lastPlacedShip.IsVertical
+                        ? GetCell(lastPlacedShip.Row + i, lastPlacedShip.Col) // Vertical
+                        : GetCell(lastPlacedShip.Row, lastPlacedShip.Col + i); // Horizontal
+
+                    if (targetCell != null)
+                    {
+                        targetCell.Background = Brushes.LightGray; // Reset to empty cell
+                    }
+                }
+
+                // Remove the ship from the list of placed ships
+                placedShips.RemoveAt(placedShips.Count - 1);
+
+                // Increase the ship count for the last placed ship
+                shipsCount[lastPlacedShip.ShipName]++;
+
+                // Reset the border color of the ship back to DarkCyan
+                ResetShipBackground(lastPlacedShip.ShipName);
+
+                MessageBox.Show($"The last placed ship ({lastPlacedShip.ShipName}) has been removed.");
+            }
+            else
+            {
+                MessageBox.Show("No ships to remove.");
+            }
+        }
+
         // Hajó elhelyezése a táblán
         private void Grid_Drop(object sender, DragEventArgs e)
         {
@@ -132,38 +235,53 @@ namespace WPF_Torpedo
                     int row = Grid.GetRow(cell);
                     int col = Grid.GetColumn(cell);
 
-                    // Ellenőrzés, hogy elfér-e a hajó a kiválasztott pozícióban
+                    // Check if the ship can be placed
                     if (CanPlaceShip(row, col))
                     {
-                        // Hajó elhelyezése
+                        // Place the ship on the grid
                         for (int i = 0; i < draggedShipSize; i++)
                         {
                             Border targetCell = isVertical
-                                ? GetCell(row + i, col) // Fü ggőleges
-                                : GetCell(row, col + i); // Vízszintes
+                                ? GetCell(row + i, col) // Vertical
+                                : GetCell(row, col + i); // Horizontal
 
                             if (targetCell != null)
                             {
-                                targetCell.Background = Brushes.DarkGray; // Hajó színe
+                                targetCell.Background = Brushes.DarkGray; // Ship's color when placed
                             }
                         }
 
-                        // Hajók számának csökkentése
+                        // Decrease the ship count
                         shipsCount[shipName]--;
-                        MessageBox.Show($"{shipName} sikeresen elhelyezve!");
+                        MessageBox.Show($"{shipName} successfully placed!");
 
+                        // Add the ship's details to the placedShips list
+                        placedShips.Add(new ShipPlacement(shipName, row, col, draggedShipSize, isVertical));
+
+                        // If the ship has been placed, change its background to red
                         if (shipsCount[shipName] == 0)
                         {
                             Border shipBorder = this.FindName(shipName) as Border;
-                            SolidColorBrush solidColorBrush = new SolidColorBrush(Color.FromArgb(Colors.Red.A, Colors.Red.R, Colors.Red.G, Colors.Red.B));
-                            shipBorder.Background = solidColorBrush;
+                            shipBorder.Background = Brushes.Red; // Ship background becomes red when placed
                         }
                     }
                     else
                     {
-                        MessageBox.Show("Nem lehet elhelyezni a hajót itt!");
+                        MessageBox.Show("Cannot place the ship here!");
                     }
                 }
+            }
+        }
+
+
+
+        private void ResetShipBackground(string shipName)
+        {
+            // Find the ship border by name and reset its background
+            Border shipBorder = this.FindName(shipName) as Border;
+            if (shipBorder != null)
+            {
+                shipBorder.Background = Brushes.DarkCyan; // Reset to DarkCyan color
             }
         }
 
@@ -212,13 +330,17 @@ namespace WPF_Torpedo
         }
 
         // Hajó orientáció váltása (pl. billentyűzetről)
-        private void Window_KeyDown(object sender, KeyEventArgs e)
+        private void Page_Keydown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.R) // R gomb megnyomásával váltás
             {
                 isVertical = !isVertical;
                 lblOrientation.Content = isVertical ? "Függőleges" : "Vízszintes";
             }
+        }
+        private void Page_Loaded(object sender, RoutedEventArgs e)
+        {
+            this.Focus(); // Ensure the page receives keyboard events
         }
     }
 }

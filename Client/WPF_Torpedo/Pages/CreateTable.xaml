@@ -7,7 +7,9 @@
         mc:Ignorable="d"
         Title="Torpedó | Pálya szerkesztése"
         Height="550" Width="900"
-        KeyDown="Window_KeyDown">
+        KeyDown="Page_Keydown"
+        Loaded="Page_Loaded"
+        Focusable="True">
     <Grid x:Name="gridMain">
         <Grid.ColumnDefinitions>
             <ColumnDefinition />
@@ -119,8 +121,26 @@
                            VerticalAlignment="Center"
                            Foreground="LightCyan" />
             </Border>
-        </StackPanel>
 
+
+        </StackPanel>
+        <Button x:Name="btnBack"
+            Content="Vissza"
+            Width="200"
+            Height="35"
+            FontSize="20"
+            Grid.Row="4"
+            Grid.Column="0"
+            Click="BtnBack_Click"/>
+
+        <Button x:Name="btnReset"
+            Content="Reset"
+            Width="200"
+            Height="35"
+            FontSize="20"
+            Grid.Row="4"
+            Grid.Column="1"
+            Click="BtnReset_Click"/>
         <Button x:Name="btnDone"
                 Content="Befejezés"
                 Width="200"
