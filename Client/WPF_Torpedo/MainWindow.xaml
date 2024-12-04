@@ -5,8 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WPF_Torpedo"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Torpedó | Játék kezdése"
+        Height="550" Width="900"
+        Style="{DynamicResource WindowStyle}">
     <Grid>
-
+        <Frame Content="{Binding Navigator.CurrentPage}" NavigationUIVisibility="Hidden"/>
     </Grid>
 </Window>

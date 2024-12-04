@@ -8,6 +8,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using WPF_Torpedo.Pages;
+using WPF_Torpedo.Services;
 
 namespace WPF_Torpedo
 {
@@ -16,9 +18,14 @@ namespace WPF_Torpedo
     /// </summary>
     public partial class MainWindow : Window
     {
-        public MainWindow()
+        IPageNavigator _navigator;
+        public IPageNavigator Navigator => _navigator;
+        public MainWindow(IPageNavigator navigator)
         {
             InitializeComponent();
+            _navigator = navigator;
+            DataContext = this;
+            _navigator.CurrentPage = new MainMenu(_navigator);
         }
     }
 }
