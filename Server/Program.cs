@@ -94,7 +94,8 @@ namespace Server
                 {
                     TcpClient first = _clients[_clients.Count - 2].Item2;
                     TcpClient second = _clients[_clients.Count - 1].Item2;
-                    await HandleClientPairAsync(first, second);
+                    Thread thread = new(() => HandleClientPair(first, second));
+                    thread.Start();
                 }
             }
             _logger.LogWarning("Client without a pair disconnected");
@@ -102,7 +103,7 @@ namespace Server
             await Task.CompletedTask;
         }
 
-        async Task HandleClientPairAsync(TcpClient first, TcpClient second)
+        void HandleClientPair(TcpClient first, TcpClient second)
         {
             using (first)
             using (second)
@@ -112,22 +113,22 @@ namespace Server
                 int bytes_read_1, bytes_read_2;
                 while (true)
                 {
-                    bytes_read_1 = await stream_1.ReadAsync(first_buffer);
-                    if (bytes_read_1 == 0) 
+                    bytes_read_1 = stream_1.Read(first_buffer);
+                    if (bytes_read_1 == 0)
                     {
                         _logger.LogWarning("Client 1 sent 0 bytes as message, breaking up the connection");
-                        break; 
+                        break;
                     }
-                    await stream_2.WriteAsync(first_buffer.AsMemory(0, bytes_read_1));
-                    Console.WriteLine($"First client sent: {Encoding.UTF8.GetString(first_buffer)}");
-                    bytes_read_2 = await stream_2.ReadAsync(second_buffer);
-                    if (bytes_read_2 == 0) 
+                    _logger.LogInformation("Client 1 sent: {Message}", Encoding.UTF8.GetString(first_buffer));
+                    stream_2.Write(first_buffer);
+                    bytes_read_2 = stream_2.Read(second_buffer);
+                    if (bytes_read_2 == 0)
                     {
                         _logger.LogWarning("Client 1 sent 0 bytes as message, breaking up the connection");
-                        break; 
+                        break;
                     }
-                    await stream_1.WriteAsync(second_buffer.AsMemory(0, bytes_read_2));
-                    Console.WriteLine($"Second client sent: {Encoding.UTF8.GetString(second_buffer)}");
+                    stream_1.Write(second_buffer);
+                    _logger.LogInformation("Client 2 sent: {Message}", Encoding.UTF8.GetString(first_buffer));
                 }
             }
             lock (_clients)
@@ -135,8 +136,6 @@ namespace Server
                 _logger.LogInformation("Removing clients....");
                 // Remove both clients when they are disconnected
                 _clients.RemoveAll(x => x.Item2 == first || x.Item2 == second);
-
-
             }
             _logger.Log(LogLevel.Information, "Client pair disconnected");
         }
