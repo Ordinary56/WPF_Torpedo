@@ -79,6 +79,10 @@ namespace WPF_Torpedo.Models
     // 5 spaces
     public class Carrier : Ship
     {
+        public Carrier(Position offset) : base(offset)
+        {
+            
+        }
         public override string Name => "Carrier";
 
         public override sbyte ID => 1;
@@ -90,8 +94,7 @@ namespace WPF_Torpedo.Models
                 new Position {X = 1, Y = 0},
                 new Position {X = 2, Y = 0},
                 new Position {X = 3, Y = 0},
-                new Position {X = 4, Y = 0},
-                new Position {X = 5, Y = 0}
+                new Position {X = 4, Y = 0}
             ],
             [
                new Position {},
@@ -106,6 +109,10 @@ namespace WPF_Torpedo.Models
     // 4 spaces
     public class BattleShip : Ship
     {
+        public BattleShip(Position offset) : base(offset)
+        {
+
+        }
         public override string Name => "BattleShip";
         public override sbyte ID => 2;
 
@@ -124,6 +131,10 @@ namespace WPF_Torpedo.Models
     // 3 spaces
     public class Cruiser : Ship
     {
+        public Cruiser(Position offset) : base(offset)
+        {
+
+        }
         public override string Name => "Cruiser";
         public override sbyte ID => 3;
 
@@ -140,6 +151,10 @@ namespace WPF_Torpedo.Models
     // 3 spaces
     public class Submarine : Ship
     {
+        public Submarine(Position offset) : base(offset)
+        {
+
+        }
         public override string Name => "Submarine";
 
         public override sbyte ID => 4;
@@ -157,6 +172,10 @@ namespace WPF_Torpedo.Models
     // 2 spaces
     public class Destroyer : Ship
     {
+        public Destroyer(Position offset) : base(offset)
+        {
+
+        }
         public override string Name => "Destroyer";
         public override sbyte ID => 5;
 

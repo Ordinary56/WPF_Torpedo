@@ -5,11 +5,14 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using WPF_Torpedo.Models;
 
 namespace WPF_Torpedo
 {
     public partial class CreateTable : Page
     {
+        private Ship _selectedShip;
+        private GameGrid _grid = new();
         private string draggedShip; // Húzott hajó neve
         private int draggedShipSize; // Húzott hajó mérete
         private bool isVertical = false; // Hajó orientáció (false = vízszintes, true = függőleges)
@@ -17,7 +20,7 @@ namespace WPF_Torpedo
         // Hajók maximális száma
         private Dictionary<string, int> shipsCount = new Dictionary<string, int>
         {
-            { "AircraftCarrier", 1 },
+            { "Carrier", 1 },
             { "Battleship", 1 },
             { "Submarine", 1 },
             { "Cruiser", 1 },
@@ -158,6 +161,26 @@ namespace WPF_Torpedo
                             SolidColorBrush solidColorBrush = new SolidColorBrush(Color.FromArgb(Colors.Red.A, Colors.Red.R, Colors.Red.G, Colors.Red.B));
                             shipBorder.Background = solidColorBrush;
                         }
+                        Position offset = new Position { X = (sbyte)row, Y = (sbyte)col };
+                        switch (shipName)
+                        {
+                            case "Carrier":
+                                _selectedShip = new Carrier(offset);
+                                break;
+                            case "Battleship":
+                                _selectedShip = new BattleShip(offset);
+                                break;
+                            case "Submarine":
+                                _selectedShip = new Submarine(offset);
+                                break;
+                            case "Cruiser":
+                                _selectedShip = new Cruiser(offset);
+                                break;
+                            case "Destroyer":
+                                _selectedShip = new Destroyer(offset);
+                                break;
+                        }
+                        _grid.PlaceShip(_selectedShip);
                     }
                     else
                     {
