@@ -150,7 +150,7 @@ namespace WPF_Torpedo
             // List of all ship names you are using
             List<string> shipNames = new List<string>
             {
-                "AircraftCarrier",
+                "Carrier",
                 "Battleship",
                 "Submarine",
                 "Cruiser",
