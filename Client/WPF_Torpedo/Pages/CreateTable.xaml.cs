@@ -11,6 +11,8 @@ namespace WPF_Torpedo
 {
     public partial class CreateTable : Page
     {
+        private Ship _selectedShip;
+        private GameGrid _grid = new();
         private string draggedShip; // Húzott hajó neve
         private int draggedShipSize; // Húzott hajó mérete
         private bool isVertical = false; // Hajó orientáció (false = vízszintes, true = függőleges)
@@ -19,7 +21,7 @@ namespace WPF_Torpedo
         // Hajók maximális száma
         private Dictionary<string, int> shipsCount = new Dictionary<string, int>
         {
-            { "AircraftCarrier", 1 },
+            { "Carrier", 1 },
             { "Battleship", 1 },
             { "Submarine", 1 },
             { "Cruiser", 1 },
@@ -264,6 +266,26 @@ namespace WPF_Torpedo
                             Border shipBorder = this.FindName(shipName) as Border;
                             shipBorder.Background = Brushes.Red; // Ship background becomes red when placed
                         }
+                        Position offset = new Position { X = (sbyte)row, Y = (sbyte)col };
+                        switch (shipName)
+                        {
+                            case "Carrier":
+                                _selectedShip = new Carrier(offset);
+                                break;
+                            case "Battleship":
+                                _selectedShip = new BattleShip(offset);
+                                break;
+                            case "Submarine":
+                                _selectedShip = new Submarine(offset);
+                                break;
+                            case "Cruiser":
+                                _selectedShip = new Cruiser(offset);
+                                break;
+                            case "Destroyer":
+                                _selectedShip = new Destroyer(offset);
+                                break;
+                        }
+                        _grid.PlaceShip(_selectedShip);
                     }
                     else
                     {

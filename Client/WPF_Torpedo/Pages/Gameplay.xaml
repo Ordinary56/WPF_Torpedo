@@ -6,7 +6,49 @@
         xmlns:local="clr-namespace:WPF_Torpedo"
         mc:Ignorable="d"
         Title="Gameplay" Height="550" Width="900">
-    <Grid>
-        
+    <Grid x:Name="gridMain">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="0.15*"/>
+            <RowDefinition Height="0.10*"/>
+            <RowDefinition />
+            <RowDefinition Height="0.25*"/>
+        </Grid.RowDefinitions>
+
+        <Label Content="Játék"
+               FontSize="38"
+               Foreground="LightCyan"
+               FontWeight="Bold"
+               Grid.ColumnSpan="2"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center" />
+
+        <Label Content="Te"
+               FontSize="24"
+               Foreground="LightCyan"
+               FontWeight="Bold"
+               Grid.Row="1"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center" />
+
+        <Label Content="[PLACEHOLDER]"
+               FontSize="24"
+               Foreground="LightCyan"
+               FontWeight="Bold"
+               Grid.Row="1"
+               Grid.Column="1"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center" />
+
+        <Button x:Name="btnAttack"
+                Content="Támadás"
+                Width="200"
+                Height="35"
+                FontSize="20"
+                Grid.Row="3"
+                Grid.ColumnSpan="2" />
     </Grid>
 </Page>
