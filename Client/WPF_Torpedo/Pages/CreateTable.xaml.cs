@@ -20,13 +20,13 @@ namespace WPF_Torpedo
 
         // Hajók maximális száma
         private Dictionary<string, int> shipsCount = new Dictionary<string, int>
-        {
-            { "Carrier", 1 },
-            { "Battleship", 1 },
-            { "Submarine", 1 },
-            { "Cruiser", 1 },
-            { "Destroyer", 1 }
-        };
+            {
+                { "Carrier", 1 },
+                { "Battleship", 1 },
+                { "Submarine", 1 },
+                { "Cruiser", 1 },
+                { "Destroyer", 1 }
+            };
 
         public CreateTable()
         {
@@ -64,23 +64,6 @@ namespace WPF_Torpedo
 
                     border.AllowDrop = true; // Drag-and-drop engedélyezése
                     border.Drop += Grid_Drop; // Drop esemény kezelése
-
-                    //// MouseEnter event to show preview
-                    //border.MouseEnter += (s, e) =>
-                    //{
-                    //    if (draggedShip != null)
-                    //    {
-                    //        // Get the current row and column of the border (cell)
-                    //        int currentRow = Grid.GetRow(border);
-                    //        int currentCol = Grid.GetColumn(border);
-
-                    //        // Check if the ship can be placed at this position
-                    //        if (CanPlaceShip(currentRow, currentCol))
-                    //        {
-                    //            border.Background = Brushes.LightBlue; // Show preview color if it can be placed
-                    //        }
-                    //    }
-                    //};
 
                     // MouseLeave event to reset color
                     border.MouseLeave += (s, e) =>
@@ -149,13 +132,13 @@ namespace WPF_Torpedo
         {
             // List of all ship names you are using
             List<string> shipNames = new List<string>
-            {
-                "Carrier",
-                "Battleship",
-                "Submarine",
-                "Cruiser",
-                "Destroyer"
-            };
+                {
+                    "Carrier",
+                    "Battleship",
+                    "Submarine",
+                    "Cruiser",
+                    "Destroyer"
+                };
 
             // Reset each ship's border background to DarkCyan
             foreach (var shipName in shipNames)
@@ -166,41 +149,42 @@ namespace WPF_Torpedo
 
         private void ResetAllPlacedShips()
         {
-            // Loop through the list of placed ships and reset each ship's cells
-            foreach (var placedShip in placedShips.ToList()) // Make a copy of the list to iterate through it
+            foreach (var placedShip in placedShips.ToList())
             {
+                // Remove the ship
                 for (int i = 0; i < placedShip.Size; i++)
                 {
                     Border targetCell = placedShip.IsVertical
-                        ? GetCell(placedShip.Row + i, placedShip.Col) // Vertical
-                        : GetCell(placedShip.Row, placedShip.Col + i); // Horizontal
+                        ? GetCell(placedShip.Row + i, placedShip.Col)
+                        : GetCell(placedShip.Row, placedShip.Col + i);
 
                     if (targetCell != null)
                     {
-                        targetCell.Background = Brushes.LightGray; // Reset to empty cell
+                        targetCell.Background = Brushes.LightGray; // Reset to default
                     }
                 }
+
+                // Remove surrounding warnings
+                RemoveWarningArea(placedShip);
             }
 
-            // Clear the placed ships list
             placedShips.Clear();
         }
 
 
+
         private void BtnBack_Click(object sender, RoutedEventArgs e)
         {
-            // Check if there are any placed ships to remove
             if (placedShips.Count > 0)
             {
-                // Get the last placed ship's details
                 ShipPlacement lastPlacedShip = placedShips.Last();
 
                 // Remove the ship's cells from the grid
                 for (int i = 0; i < lastPlacedShip.Size; i++)
                 {
                     Border targetCell = lastPlacedShip.IsVertical
-                        ? GetCell(lastPlacedShip.Row + i, lastPlacedShip.Col) // Vertical
-                        : GetCell(lastPlacedShip.Row, lastPlacedShip.Col + i); // Horizontal
+                        ? GetCell(lastPlacedShip.Row + i, lastPlacedShip.Col)
+                        : GetCell(lastPlacedShip.Row, lastPlacedShip.Col + i);
 
                     if (targetCell != null)
                     {
@@ -208,20 +192,56 @@ namespace WPF_Torpedo
                     }
                 }
 
-                // Remove the ship from the list of placed ships
+                // Remove the warning area
+                RemoveWarningArea(lastPlacedShip);
+
+                // Remove the ship from the placedShips list
                 placedShips.RemoveAt(placedShips.Count - 1);
 
-                // Increase the ship count for the last placed ship
+                // Reset the ship background
                 shipsCount[lastPlacedShip.ShipName]++;
-
-                // Reset the border color of the ship back to DarkCyan
                 ResetShipBackground(lastPlacedShip.ShipName);
+
+                // Redraw warning areas for all remaining ships
+                foreach (var remainingShip in placedShips)
+                {
+                    MarkWarningArea(remainingShip.Row, remainingShip.Col, remainingShip.Size, remainingShip.IsVertical);
+                }
 
                 MessageBox.Show($"The last placed ship ({lastPlacedShip.ShipName}) has been removed.");
             }
             else
             {
                 MessageBox.Show("No ships to remove.");
+            }
+        }
+
+
+        private void RemoveWarningArea(ShipPlacement ship)
+        {
+            int row = ship.Row;
+            int col = ship.Col;
+            int size = ship.Size;
+            bool isVertical = ship.IsVertical;
+
+            for (int i = -1; i <= size; i++)
+            {
+                for (int j = -1; j <= 1; j++)
+                {
+                    int warningRow = isVertical ? row + i : row + j;
+                    int warningCol = isVertical ? col + j : col + i;
+
+                    // Ensure the warning area is within bounds
+                    if (warningRow >= 0 && warningRow < 10 && warningCol >= 0 && warningCol < 10)
+                    {
+                        Border warningCell = GetCell(warningRow, warningCol);
+                        if (warningCell != null)
+                        {
+                            // Always reset the background to default (LightGray in this case)
+                            warningCell.Background = Brushes.LightGray;
+                        }
+                    }
+                }
             }
         }
 
@@ -253,6 +273,9 @@ namespace WPF_Torpedo
                             }
                         }
 
+                        // Mark surrounding tiles as warning area
+                        MarkWarningArea(row, col, draggedShipSize, isVertical);
+
                         // Decrease the ship count
                         shipsCount[shipName]--;
                         MessageBox.Show($"{shipName} successfully placed!");
@@ -266,6 +289,7 @@ namespace WPF_Torpedo
                             Border shipBorder = this.FindName(shipName) as Border;
                             shipBorder.Background = Brushes.Red; // Ship background becomes red when placed
                         }
+
                         Position offset = new Position { X = (sbyte)row, Y = (sbyte)col };
                         switch (shipName)
                         {
@@ -310,7 +334,7 @@ namespace WPF_Torpedo
         // Ellenőrzés, hogy a hajó elhelyezhető-e
         private bool CanPlaceShip(int row, int col)
         {
-            // Ellenőrzés, hogy a hajó nem lóg ki a rácsból
+            // Check if the ship fits within the grid
             if (isVertical)
             {
                 if (row + draggedShipSize > 10) return false;
@@ -320,19 +344,38 @@ namespace WPF_Torpedo
                 if (col + draggedShipSize > 10) return false;
             }
 
-            // Ellenőrzés, hogy a hajó nem ütközik más hajóval, vagy nem érintkezik velük
+            // Check for collisions and adjacency
             for (int i = 0; i < draggedShipSize; i++)
             {
-                int checkRow = isVertical ? row + i : row;
-                int checkCol = isVertical ? col : col + i;
+                int shipRow = isVertical ? row + i : row;
+                int shipCol = isVertical ? col : col + i;
 
                 // Ensure we are within bounds
-                if (checkRow >= 0 && checkRow < 10 && checkCol >= 0 && checkCol < 10)
+                if (shipRow >= 0 && shipRow < 10 && shipCol >= 0 && shipCol < 10)
                 {
-                    Border targetCell = GetCell(checkRow, checkCol);
+                    Border targetCell = GetCell(shipRow, shipCol);
                     if (targetCell != null && targetCell.Background == Brushes.DarkGray)
                     {
-                        return false; // Ütközés vagy érintkezés más hajóval
+                        return false; // Collision with an existing ship
+                    }
+
+                    // Check surrounding cells for adjacency
+                    for (int offsetRow = -1; offsetRow <= 1; offsetRow++)
+                    {
+                        for (int offsetCol = -1; offsetCol <= 1; offsetCol++)
+                        {
+                            int checkRow = shipRow + offsetRow;
+                            int checkCol = shipCol + offsetCol;
+
+                            if (checkRow >= 0 && checkRow < 10 && checkCol >= 0 && checkCol < 10)
+                            {
+                                Border adjacentCell = GetCell(checkRow, checkCol);
+                                if (adjacentCell != null && adjacentCell.Background == Brushes.DarkGray)
+                                {
+                                    return false; // Adjacent to another ship
+                                }
+                            }
+                        }
                     }
                 }
                 else
@@ -340,7 +383,29 @@ namespace WPF_Torpedo
                     return false; // Out of bounds
                 }
             }
-            return true; // No collisions, valid placement
+
+            return true; // No collisions or adjacency issues, placement is valid
+        }
+        private void MarkWarningArea(int row, int col, int size, bool isVertical)
+        {
+            for (int i = -1; i <= size; i++)
+            {
+                for (int j = -1; j <= 1; j++)
+                {
+                    int warningRow = isVertical ? row + i : row + j;
+                    int warningCol = isVertical ? col + j : col + i;
+
+                    // Ensure the warning area is within bounds
+                    if (warningRow >= 0 && warningRow < 10 && warningCol >= 0 && warningCol < 10)
+                    {
+                        Border warningCell = GetCell(warningRow, warningCol);
+                        if (warningCell != null && warningCell.Background == Brushes.LightGray) // Only mark empty cells
+                        {
+                            warningCell.Background = Brushes.LightSalmon; // Warning area color
+                        }
+                    }
+                }
+            }
         }
 
         // Cellák elérése a gridMain belső rácsból
