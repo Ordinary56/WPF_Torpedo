@@ -1,22 +1,54 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace WPF_Torpedo.Models
 {
-    internal enum States
-    {
-        IDLE = 0,
-        IN_QUEUE,
-        PREPARING,
-        PLAYER_1_TURN,
-        PLAYER_2_TURN,
-        WIN,
-        LOSE
+    public enum GAME_STATE  {
+        SINGLE = 0,
+        MULTI = 1
     }
-    public class StateManager
+
+    public enum PLAYER_STATE
     {
+        IN_TURN = 0,
+        NOT_IN_TURN,
+        WIN,
+        //chat, is this loss?
+        LOSS
+    }
+    public class StateManager : INotifyPropertyChanged
+    {
+        private GAME_STATE? _selectedgame = null;
+        private PLAYER_STATE _playerstate;
+        public GAME_STATE? SelectedGame
+        {
+            get => _selectedgame;
+            set
+            {
+                _selectedgame = value;
+                OnPropertyChanged(nameof(SelectedGame));
+            }
+        }
+        public PLAYER_STATE PlayerState
+        {
+            get => _playerstate;
+            set
+            {
+                _playerstate = value;
+                OnPropertyChanged(nameof(PlayerState));
+            }
+        }
+        //#region Interface implementation 
+        public event PropertyChangedEventHandler? PropertyChanged;
+        public void OnPropertyChanged([CallerMemberName] string property = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
+        }
+        //#endregion 
     }
 }

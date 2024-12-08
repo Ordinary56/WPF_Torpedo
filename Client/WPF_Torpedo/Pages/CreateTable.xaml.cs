@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using WPF_Torpedo.Models;
+using WPF_Torpedo.Services;
 
 namespace WPF_Torpedo
 {
@@ -17,6 +18,8 @@ namespace WPF_Torpedo
         private int draggedShipSize; // Húzott hajó mérete
         private bool isVertical = false; // Hajó orientáció (false = vízszintes, true = függőleges)
         private List<ShipPlacement> placedShips = new List<ShipPlacement>();
+        private IPageNavigator _navigator;
+        private Player _player;
 
         // Hajók maximális száma
         private Dictionary<string, int> shipsCount = new Dictionary<string, int>
@@ -28,10 +31,12 @@ namespace WPF_Torpedo
                 { "Destroyer", 1 }
             };
 
-        public CreateTable()
+        public CreateTable(Player player, IPageNavigator navigator)
         {
             InitializeComponent();
             GenerateGrid();
+            _player = player;
+            _navigator = navigator; 
         }
 
         public void GenerateGrid()
@@ -428,6 +433,12 @@ namespace WPF_Torpedo
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
             this.Focus(); // Ensure the page receives keyboard events
+        }
+
+        private void btnDone_Click(object sender, RoutedEventArgs e)
+        {
+            _player.Grid = _grid;
+            _navigator.MoveToPage<Gameplay>();
         }
     }
 }

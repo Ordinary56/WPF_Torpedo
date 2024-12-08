@@ -1,4 +1,6 @@
-﻿namespace WPF_Torpedo.Models
+﻿using System.Text;
+
+namespace WPF_Torpedo.Models
 {
     /// <summary>
     /// This class represents the game's Grid
@@ -7,10 +9,11 @@
     public class GameGrid(int row, int col)
     {
         sbyte[,] _array = new sbyte[row, col];
+        public sbyte[,] Grid { get => _array; set => _array = value; }
         public GameGrid() : this(10, 10)
         {
         }
-        public int this[int row, int col] => _array[row, col];
+        public sbyte this[int row, int col] => _array[row, col];
         /// <summary>
         /// Get's a cell from the grid
         /// </summary>
@@ -51,6 +54,26 @@
                 _array[position.X, position.Y] = ship.ID;
             }
         }
-
+        public override string ToString()
+        {
+            StringBuilder builder = new();
+            for (int i = 0; i < _array.GetLength(0); i++)
+            {
+                for(int j = 0; j < _array.GetLength(1); j++)
+                {
+                    builder.Append(this[i,j]);
+                }
+                builder.Append('\n');
+            }
+            return builder.ToString();
+        }
+        public string ToString(bool? flatten = null)
+        {
+            if(flatten is false || flatten == null) return this.ToString();
+            sbyte[] flattened = _array.Cast<sbyte>().ToArray();
+            StringBuilder builder = new();
+            foreach(sbyte item in flattened) builder.Append(item);
+            return builder.ToString();
+        }
     }
 }

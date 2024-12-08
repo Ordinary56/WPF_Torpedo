@@ -17,9 +17,13 @@ namespace Server
                                     .ConfigureLogging(ConfigureLogging)
                                     .Build();
             Server server = _host.Services.GetRequiredService<Server>();
-            
-            var test = _host.Services.GetService<ITest>();
-            await Task.WhenAll(_host.RunAsync(),server.StartAsync(), test!.Test());
+            Console.CancelKeyPress += async (o, e) =>
+            {
+                e.Cancel = true;
+                await _host.StopAsync();
+            };
+            _host.Start();
+            await Task.WhenAny(_host.WaitForShutdownAsync(),server.StartAsync());
         }
 
         static void ConfigureLogging(HostBuilderContext context, ILoggingBuilder builder)
@@ -31,7 +35,6 @@ namespace Server
         static void ConfigureServices(HostBuilderContext context, IServiceCollection services) 
         {
             services.AddSingleton<Server>();
-            services.AddTransient<ITest, TestClientDisconnected>();
         }
 
     }
@@ -41,7 +44,7 @@ namespace Server
         readonly TcpListener _listener;
 
         // List to store all clients 
-        readonly List<(string, TcpClient)> _clients;
+        readonly List<TcpClient> _clients;
 
         // Address
         const string ADDRESS = "127.0.0.1";
@@ -58,48 +61,37 @@ namespace Server
             _logger = logger;
         }
 
-        async Task<string> GetUsernameAsync(TcpClient client)
-        {
-            NetworkStream stream = client.GetStream();
-            byte[] buffer = new byte[1024];
-            await stream.ReadAsync(buffer, 0, buffer.Length);
-            await stream.FlushAsync();
-            return Encoding.UTF8.GetString(buffer);
-        }
-
-        public async Task StartAsync()
+      public async Task StartAsync()
         {
             _listener.Start();
             _logger.Log(LogLevel.Information, "Server is running at {Address}:{Port}", ADDRESS, PORT);
             TcpClient? client = null;
-            string username;
             while (true)
             {
                 client = await _listener.AcceptTcpClientAsync();
-                username = await GetUsernameAsync(client);
                 lock (_clients)
                 {
-                    _clients.Add((username, client));
+                    _clients.Add(client);
                     _logger.Log(LogLevel.Information, "Client connected, total clients: {clientCount}", _clients.Count);
                 }
                 break;
             }
-            await WaitForConnectingPairAsync(username, client!);
+            await WaitForConnectingPairAsync(client!);
         }
-        async Task WaitForConnectingPairAsync(string username,TcpClient client)
+        async Task WaitForConnectingPairAsync(TcpClient client)
         {
             while(client.IsConnected())
             {
                 if ((_clients.Count & 1) == 0)
                 {
-                    TcpClient first = _clients[_clients.Count - 2].Item2;
-                    TcpClient second = _clients[_clients.Count - 1].Item2;
+                    TcpClient first = _clients[_clients.Count - 2];
+                    TcpClient second = _clients[_clients.Count - 1];
                     Thread thread = new(() => HandleClientPair(first, second));
                     thread.Start();
                 }
             }
             _logger.LogWarning("Client without a pair disconnected");
-            _clients.Remove((username, client));
+            _clients.Remove(client);
             await Task.CompletedTask;
         }
 
@@ -135,7 +127,7 @@ namespace Server
             {
                 _logger.LogInformation("Removing clients....");
                 // Remove both clients when they are disconnected
-                _clients.RemoveAll(x => x.Item2 == first || x.Item2 == second);
+                _clients.RemoveAll(x => x == first || x == second);
             }
             _logger.Log(LogLevel.Information, "Client pair disconnected");
         }

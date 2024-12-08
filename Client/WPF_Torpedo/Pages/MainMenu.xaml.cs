@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using WPF_Torpedo.Models;
 using WPF_Torpedo.Services;
 
 namespace WPF_Torpedo.Pages
@@ -22,16 +23,33 @@ namespace WPF_Torpedo.Pages
     public partial class MainMenu : Page
     {
         private IPageNavigator _navigator;
-        public MainMenu(IPageNavigator navigator)
+        private StateManager _stateManager;
+        private readonly Player _player;
+        public MainMenu(IPageNavigator navigator, StateManager manager, Player player)
         {
             InitializeComponent();
             _navigator = navigator;
+            _stateManager = manager;
+            _player = player;
         }
 
         private void btnStartGame_Click(object sender, RoutedEventArgs e)
         {
+            if (txtPlayerName.Text.Length == 0)
+            {
+                MessageBox.Show("Kérlek adj meg egy felhasználónevet");
+                return;
+            }
+            _player.Username = txtPlayerName.Text;
             _navigator.MoveToPage<CreateTable>();
         }
 
+        private void ChangeState(object sender, RoutedEventArgs e)
+        {
+            if(sender is Button btn)
+            {
+                _stateManager.SelectedGame = btn.Tag.ToString() == "0" ? GAME_STATE.SINGLE : btn.Tag.ToString() == "1" ? GAME_STATE.MULTI : null;
+            }
+        }
     }
 }

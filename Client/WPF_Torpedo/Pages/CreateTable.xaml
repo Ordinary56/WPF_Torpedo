@@ -147,6 +147,7 @@
                 Height="35"
                 FontSize="20"
                 Grid.Row="4"
-                Grid.ColumnSpan="2"/>
+                Grid.ColumnSpan="2"
+                Click="btnDone_Click"/>
     </Grid>
 </Page>

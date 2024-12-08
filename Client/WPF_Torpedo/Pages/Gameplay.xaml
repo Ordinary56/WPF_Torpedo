@@ -32,7 +32,8 @@
                FontWeight="Bold"
                Grid.Row="1"
                HorizontalAlignment="Center"
-               VerticalAlignment="Center" />
+               VerticalAlignment="Center" 
+               x:Name="lb_Player"/>
 
         <Label Content="[PLACEHOLDER]"
                FontSize="24"
@@ -41,7 +42,8 @@
                Grid.Row="1"
                Grid.Column="1"
                HorizontalAlignment="Center"
-               VerticalAlignment="Center" />
+               VerticalAlignment="Center" 
+               x:Name="lb_enemy"/>
 
         <Button x:Name="btnAttack"
                 Content="Támadás"

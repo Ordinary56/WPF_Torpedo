@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using WPF_Torpedo.Helpers;
 using WPF_Torpedo.Models;
 using WPF_Torpedo.Services;
 
@@ -24,23 +25,59 @@ namespace WPF_Torpedo
         private Position selectedPosition = new Position { X = -1, Y = -1};
         private bool isSelected = false;
         private IPageNavigator _navigator;
-        public Gameplay(IPageNavigator navigator)
+        private Player _player;
+        private string _enemyName;
+        private GameGrid _enemyGrid;
+        private int your_turn = 0;
+        public Gameplay(IPageNavigator navigator, Player player)
         {
             InitializeComponent();
-            GenerateGrid(2, 0, "Player");
+            GenerateGrid(2, 0, player.Username);
             GenerateGrid(2, 1, "Opponent");
             _navigator = navigator;
+            _player = player;
+            _player.ConnectToServer();
+            RecieveEnemyInfo();
+            ListenForMessages();
+        }
+        void ListenForMessages()
+        {
+            while(true)
+            {
+                byte[] buffer = new byte[256];
+                _player.Stream.Read(buffer , 0, buffer.Length);
+                string data = Encoding.UTF8.GetString(buffer);
+                // Kör
+                if (data == "1")
+                {
+                    your_turn = 1;
+                    
+                }
+            }
+        }
+
+        void RecieveEnemyInfo()
+        {
+            byte[] data = new byte[256];
+            _player.Stream.Read(data);
+            string enemyInfo = Encoding.UTF8.GetString(data);
+            string[] values = enemyInfo.Split(';');
+            _enemyName =  values[0];
+            _enemyGrid = GridParser.ParseGrid(values[^1]);
+            lb_Player.Content = _player.Username;
+            lb_enemy.Content = _enemyName;
         }
 
         public void GenerateGrid(int posRow, int posCol, string tableType)
         {
             Viewbox viewbox = new Viewbox();
 
-            Grid grid = new Grid
+            Grid grid = new ()
             {
                 Width = 300,
                 Height = 300,
-                ShowGridLines = true
+                ShowGridLines = true,
+                Name = tableType
             };
 
             for (int i = 0; i < 11; i++)
