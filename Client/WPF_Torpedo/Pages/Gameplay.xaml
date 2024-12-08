@@ -1,11 +1,11 @@
 ﻿<Page x:Class="WPF_Torpedo.Gameplay"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:WPF_Torpedo"
-        mc:Ignorable="d"
-        Title="Gameplay" Height="550" Width="900">
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:local="clr-namespace:WPF_Torpedo"
+      mc:Ignorable="d"
+      Title="Gameplay" Height="550" Width="900">
     <Grid x:Name="gridMain">
         <Grid.ColumnDefinitions>
             <ColumnDefinition />
@@ -34,7 +34,7 @@
                HorizontalAlignment="Center"
                VerticalAlignment="Center" />
 
-        <Label Content="[PLACEHOLDER]"
+        <Label Content="Ellenfél"
                FontSize="24"
                Foreground="LightCyan"
                FontWeight="Bold"
@@ -43,12 +43,10 @@
                HorizontalAlignment="Center"
                VerticalAlignment="Center" />
 
-        <Button x:Name="btnAttack"
-                Content="Támadás"
-                Width="200"
-                Height="35"
-                FontSize="20"
-                Grid.Row="3"
-                Grid.ColumnSpan="2" />
+        <!-- Player's grid -->
+        <Grid x:Name="playerGrid" Grid.Row="2" Grid.Column="0" />
+
+        <!-- Enemy's grid -->
+        <Grid x:Name="enemyGrid" Grid.Row="2" Grid.Column="1" />
     </Grid>
 </Page>

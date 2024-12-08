@@ -142,11 +142,12 @@
             Grid.Column="1"
             Click="BtnReset_Click"/>
         <Button x:Name="btnDone"
-                Content="Befejezés"
-                Width="200"
-                Height="35"
-                FontSize="20"
-                Grid.Row="4"
-                Grid.ColumnSpan="2"/>
+        Content="Befejezés"
+        Width="200"
+        Height="35"
+        FontSize="20"
+        Grid.Row="4"
+        Grid.ColumnSpan="2"
+        Click="btnDone_Click"/>
     </Grid>
 </Page>
