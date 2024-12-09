@@ -32,7 +32,8 @@
                FontWeight="Bold"
                Grid.Row="1"
                HorizontalAlignment="Center"
-               VerticalAlignment="Center" />
+               VerticalAlignment="Center" 
+               x:Name="lb_Player"/>
 
         <Label Content="Ellenfél"
                FontSize="24"
@@ -41,7 +42,8 @@
                Grid.Row="1"
                Grid.Column="1"
                HorizontalAlignment="Center"
-               VerticalAlignment="Center" />
+               VerticalAlignment="Center" 
+               x:Name="lb_enemy"/>
 
         <!-- Player's grid -->
         <Grid x:Name="playerGrid" Grid.Row="2" Grid.Column="0" />

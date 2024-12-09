@@ -48,13 +48,17 @@
                     Content="1 játékos"
                     Width="150"
                     Height="35"
-                    Margin="20" />
+                    Margin="20"
+                    Click="ChangeState" 
+                    Tag="0"/>
 
             <Button x:Name="btn2Player"
                     Content="2 játékos"
                     Width="150"
                     Height="35"
-                    Margin="20"/>
+                    Margin="20"
+                    Click="ChangeState"
+                    Tag="1"/>
         </StackPanel>
 
         <StackPanel Grid.Row="3"
@@ -79,7 +83,8 @@
                 Margin="20"
                 Grid.Row="4"
                 Grid.ColumnSpan="2"
-                Click="btnStartGame_Click"/>
+                Click="btnStartGame_Click"
+                />
 
         <!--
             <Button x:Name="btnLeaderboard"

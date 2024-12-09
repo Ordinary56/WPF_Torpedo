@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using WPF_Torpedo.Helpers;
 using WPF_Torpedo.Models;
 using WPF_Torpedo.Services;
 
@@ -67,6 +68,7 @@ namespace WPF_Torpedo
                 MessageBox.Show($"Error during cleanup: {ex.Message}");
             }
         }
+
 
         private void GenerateGridForGameplay()
         {

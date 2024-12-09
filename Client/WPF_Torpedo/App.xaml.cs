@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using System.Windows.Controls;
+using WPF_Torpedo.Models;
 using WPF_Torpedo.Services;
 
 namespace WPF_Torpedo
@@ -14,6 +15,8 @@ namespace WPF_Torpedo
         public App()
         {
             IServiceCollection collection = new ServiceCollection();
+            collection.AddSingleton<StateManager>();
+            collection.AddSingleton<Player>();
             collection.AddSingleton<MainWindow>();
             collection.AddSingleton<IPageNavigator, PageNavigator>();
             collection.AddSingleton<Func<Type, Page>>(provider => page => (Page)provider.GetRequiredService(page));
