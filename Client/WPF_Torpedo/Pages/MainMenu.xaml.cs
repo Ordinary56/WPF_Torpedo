@@ -57,6 +57,18 @@ namespace WPF_Torpedo.Pages
                 return;
             }
             _player.Username = txtPlayerName.Text;
+            _player.ConnectToServer();
+            byte[] buffer = new byte[1024];
+            _player.Stream.Read(buffer, 0, buffer.Length);
+            string data = Encoding.UTF8.GetString(buffer);
+            while(data == "1")
+            {
+                buffer = new byte[1024];
+                _player.Stream.Read(buffer, 0, buffer.Length);
+                data = Encoding.UTF8.GetString(buffer);
+            }
+
+
             _navigator.MoveToPage<CreateTable>();
         }
 

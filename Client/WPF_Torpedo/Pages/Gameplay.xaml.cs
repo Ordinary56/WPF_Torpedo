@@ -9,7 +9,7 @@ using WPF_Torpedo.Helpers;
 using WPF_Torpedo.Models;
 using WPF_Torpedo.Services;
 
-namespace WPF_Torpedo
+namespace WPF_Torpedo.Pages
 {
     /// <summary>
     /// Interaction logic for Gameplay.xaml
@@ -23,21 +23,19 @@ namespace WPF_Torpedo
         private NetworkStream _stream;
         private bool isPlayerTurn = true; // Tracks whose turn it is
         List<ShipPlacement> placedShips = new List<ShipPlacement>();
+        Player _player;
+        GameGrid _eGrid;
 
 
-        public Gameplay(IPageNavigator navigator, TcpClient client, List<ShipPlacement> placedShips)
+        public Gameplay(IPageNavigator navigator, TcpClient client, List<ShipPlacement> placedShips, Player player)
         {
             InitializeComponent();
             this.placedShips = placedShips;
             _navigator = navigator;
             _client = client;
-
-            if (_client != null)
-            {
-                _stream = _client.GetStream();
-                NotifyServer("Client connected and ready!");
-                StartListeningForMessages();
-            }
+            _player = player;
+            _player.SendInfoToServer();
+            StartListeningForMessages();
 
             // Generate the grid with ships already placed
             GenerateGridForGameplay();
@@ -139,7 +137,8 @@ namespace WPF_Torpedo
                     {
                         Background = Brushes.LightGray, // Default background color for empty cells
                         BorderBrush = Brushes.Black,    // Cell border
-                        BorderThickness = new Thickness(1)
+                        BorderThickness = new Thickness(1),
+                        Tag = $"{row},{col}"
                     };
 
                     // MouseLeave event to reset color
@@ -148,6 +147,17 @@ namespace WPF_Torpedo
                         if (border.Background == Brushes.LightBlue)
                         {
                             border.Background = Brushes.LightGray; // Reset color when mouse leaves
+                        }
+                    };
+                    border.MouseLeftButtonDown += (s, e) =>
+                    {
+                        if (e.ButtonState == System.Windows.Input.MouseButtonState.Pressed &&
+                        isPlayerTurn && s is Border bord)
+                        {
+                            var coords = bord.Tag.ToString().Split(',');
+                            Position positions = new() { X = Convert.ToSByte(coords[0]), Y = Convert.ToSByte(coords[^1]) };
+                            SendAttackCoordinates(positions);
+                            isPlayerTurn = false;
                         }
                     };
 
@@ -210,8 +220,7 @@ namespace WPF_Torpedo
 
         private void SendAttackCoordinates(Position position)
         {
-            string message = $"Attack,{position.X},{position.Y}"; // Format message as Attack,X,Y
-            SendMessage(message); // Send attack coordinates to the server
+            _player.SendFireTo(position.X, position.Y);
         }
 
         private async void StartListeningForMessages()
@@ -222,7 +231,7 @@ namespace WPF_Torpedo
 
                 while (_client.Connected)
                 {
-                    int bytesRead = await _stream.ReadAsync(buffer, 0, buffer.Length);
+                    int bytesRead = await _stream.ReadAsync(buffer);
                     if (bytesRead > 0)
                     {
                         string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
@@ -241,32 +250,29 @@ namespace WPF_Torpedo
             // Handle server response for hit/miss or game end
 
             string[] parts = response.Split(',');
-
-            if (parts.Length == 3)
+            string result;
+            int X = 0, Y = 0;
+            if (parts[0] == "Info")
             {
-                string result = parts[0]; // "Hit" or "Miss"
-                int x = int.Parse(parts[1]);
-                int y = int.Parse(parts[2]);
-
-                // Update the grid based on hit/miss result
-                UpdateGridCell(x, y, result);
-
-                // If game over, notify player
-                if (result == "GameOver")
+                _eGrid = GridParser.ParseGrid(parts[^1]);
+            }
+            else if (parts[0] == "Attack")
+            {
+                _player.RecieveFire(int.Parse(parts[1]), int.Parse(parts[^1]));
+                if (_player.Grid.GetCell(int.Parse(parts[1]), int.Parse(parts[^1])) > 0)
                 {
-                    MessageBox.Show("Game Over! You won!");
+                    result = "Hit";
                 }
-                else
-                {
-                    isPlayerTurn = true;  // Allow the player to take their turn again
-                }
+                else result = "Miss";
+                UpdateGridCell(X, Y, result, playerGrid);
             }
         }
 
-        private void UpdateGridCell(int x, int y, string result)
+
+        private void UpdateGridCell(int x, int y, string result, Grid chosenGrid)
         {
             // Find the corresponding grid cell and color it based on result (Hit or Miss)
-            Border cell = GetGridCell(x, y, enemyGrid); // Use correct grid (gridOpponent for opponent)
+            Border cell = GetGridCell(x, y, chosenGrid); // Use correct grid (gridOpponent for opponent)
             if (cell != null)
             {
                 if (result == "Hit")

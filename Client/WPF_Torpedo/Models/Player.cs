@@ -27,24 +27,19 @@ namespace WPF_Torpedo.Models
         }
         public void SendInfoToServer()
         {
-            string info = $"{Username};{_grid.ToString(true)}";
+            string info = $"Info,{Username};{_grid.ToString(true)}";
             byte[] bytes = Encoding.UTF8.GetBytes(info);
             Stream.Write(bytes, 0, bytes.Length);
         }
 
         // this is utter garbage
-        public void SendFireTo(int x, int y, NetworkStream stream)
+        public void SendFireTo(int x, int y)
         {
-            byte[] buffer = Encoding.UTF8.GetBytes($"/{x};{y}");
-            stream.Write( buffer, 0, buffer.Length );
+            byte[] buffer = Encoding.UTF8.GetBytes($"Attack,{x},{y}");
+            Stream.Write( buffer, 0, buffer.Length );
         }
-        public void RecieveFire(NetworkStream stream)
+        public void RecieveFire(int x, int y)
         {
-            byte[] recieved = new byte[10];
-            stream.Read(recieved);
-            string[] coords = Encoding.UTF8.GetString(recieved).Split(';');
-            int x = Convert.ToInt32(coords[0][^1]);
-            int y = Convert.ToInt32(coords[1]);
             _grid.BombCell(x, y);
         }
     }

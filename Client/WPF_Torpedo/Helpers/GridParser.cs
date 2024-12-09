@@ -18,7 +18,7 @@ namespace WPF_Torpedo.Helpers
             int colcounter = 0;
             for(int i = 0; i < coord.Length; i++)
             {
-                data[rowcounter, colcounter] = sbyte.Parse(coord[i]);
+                data[rowcounter, colcounter] = Convert.ToSByte(coord[i]);
                 colcounter++;
                 if(i % 10 == 0)
                 {

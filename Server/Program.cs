@@ -44,7 +44,6 @@ namespace Server
     public class Server
     {
         private readonly TcpListener _listener;
-        private readonly List<(string, TcpClient)> _clients;
         private readonly ILogger<Server> _logger;
 
 
@@ -56,7 +55,7 @@ namespace Server
         public Server(ILogger<Server> logger)
         {
             _listener = new TcpListener(IPAddress.Parse(ADDRESS), PORT);
-            _clients = new List<(string, TcpClient)>();
+            _clients = new List<TcpClient>();
             _logger = logger;
         }
 
@@ -73,15 +72,15 @@ namespace Server
                     _clients.Add(client);
                     _logger.Log(LogLevel.Information, "Client connected, total clients: {clientCount}", _clients.Count);
                 }
-                await WaitForConnectingPairAsync(username, client);
+                await WaitForConnectingPairAsync(client);
             }
-            await WaitForConnectingPairAsync(client!);
         }
         async Task WaitForConnectingPairAsync(TcpClient client)
 
         {
             while (client.Connected)
             {
+                await client.GetStream().WriteAsync(Encoding.UTF8.GetBytes("1"));
                 if ((_clients.Count & 1) == 0) // Every second client forms a pair
                 {
                     TcpClient first = _clients[_clients.Count - 2];
@@ -97,7 +96,7 @@ namespace Server
             // Client disconnected without a pair
             lock (_clients)
             {
-                _clients.Remove((username, client));
+                _clients.Remove(client);
             }
             _logger.LogWarning("Client without a pair disconnected");
             await Task.CompletedTask;

@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using WPF_Torpedo.Models;
 using WPF_Torpedo.Services;
+using WPF_Torpedo.Pages;
 
 namespace WPF_Torpedo
 {
@@ -19,8 +20,7 @@ namespace WPF_Torpedo
         private int draggedShipSize; // Húzott hajó mérete
         private bool isVertical = false; // Hajó orientáció (false = vízszintes, true = függőleges)
         private List<ShipPlacement> placedShips = new List<ShipPlacement>();
-
-        private TcpClient _client;
+        private Player _player;
         private IPageNavigator _navigator;
 
         // Hajók maximális száma
@@ -443,8 +443,8 @@ namespace WPF_Torpedo
             if (placedShips.Count == 5)
             {
                 // All ships placed, navigate to the gameplay page
-                var gameplayPage = new Gameplay(_navigator, _client, placedShips);
-                NavigationService.Navigate(gameplayPage);
+                _player.Grid = _grid;
+                _navigator.MoveToPage<Gameplay>();
             }
             else
             {
