@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -18,8 +19,9 @@ namespace WPF_Torpedo
         private int draggedShipSize; // Húzott hajó mérete
         private bool isVertical = false; // Hajó orientáció (false = vízszintes, true = függőleges)
         private List<ShipPlacement> placedShips = new List<ShipPlacement>();
+
+        private TcpClient _client;
         private IPageNavigator _navigator;
-        private Player _player;
 
         // Hajók maximális száma
         private Dictionary<string, int> shipsCount = new Dictionary<string, int>
@@ -437,8 +439,18 @@ namespace WPF_Torpedo
 
         private void btnDone_Click(object sender, RoutedEventArgs e)
         {
-            _player.Grid = _grid;
-            _navigator.MoveToPage<Gameplay>();
+            // Check if ships have been placed
+            if (placedShips.Count == 5)
+            {
+                // All ships placed, navigate to the gameplay page
+                var gameplayPage = new Gameplay(_navigator, _client, placedShips);
+                NavigationService.Navigate(gameplayPage);
+            }
+            else
+            {
+                // If not all ships are placed, show a message
+                MessageBox.Show("Please place all ships before proceeding.");
+            }
         }
     }
 }

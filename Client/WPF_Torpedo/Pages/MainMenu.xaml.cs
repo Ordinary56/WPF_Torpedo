@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -22,6 +23,7 @@ namespace WPF_Torpedo.Pages
     /// </summary>
     public partial class MainMenu : Page
     {
+        private TcpClient client;
         private IPageNavigator _navigator;
         private StateManager _stateManager;
         private readonly Player _player;
@@ -31,6 +33,20 @@ namespace WPF_Torpedo.Pages
             _navigator = navigator;
             _stateManager = manager;
             _player = player;
+        }
+
+        private void ConnectToServer()
+        {
+            try
+            {
+                client = new TcpClient();
+                client.Connect("127.0.0.1", 37065);
+                MessageBox.Show("Successfully connected to the server!");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to connect to the server: {ex.Message}");
+            }
         }
 
         private void btnStartGame_Click(object sender, RoutedEventArgs e)
