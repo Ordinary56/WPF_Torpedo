@@ -9,6 +9,8 @@ using System.Windows.Media;
 using WPF_Torpedo.Models;
 using WPF_Torpedo.Services;
 using WPF_Torpedo.Pages;
+using System.Text;
+using System.Net;
 
 namespace WPF_Torpedo
 {
@@ -22,24 +24,25 @@ namespace WPF_Torpedo
         private List<ShipPlacement> placedShips;
         private Player _player;
         private IPageNavigator _navigator;
+        private bool _isPlayerReady = false; // Flag to track if the current player is ready
+        private bool _otherPlayerIsReady = false;
 
         // Hajók maximális száma
         private Dictionary<string, int> shipsCount = new Dictionary<string, int>
-            {
-                { "Carrier", 1 },
-                { "Battleship", 1 },
-                { "Submarine", 1 },
-                { "Cruiser", 1 },
-                { "Destroyer", 1 }
-            };
-
+    {
+        { "Carrier", 1 },
+        { "Battleship", 1 },
+        { "Submarine", 1 },
+        { "Cruiser", 1 },
+        { "Destroyer", 1 }
+    };
         public CreateTable(Player player, IPageNavigator navigator, List<ShipPlacement> placement)
         {
             InitializeComponent();
             GenerateGrid();
             placedShips = placement;
             _player = player;
-            _navigator = navigator; 
+            _navigator = navigator;
         }
 
         public void GenerateGrid()
@@ -433,7 +436,7 @@ namespace WPF_Torpedo
                 isVertical = !isVertical;
                 lblOrientation.Content = isVertical ? "Függőleges" : "Vízszintes";
             }
-        }
+        }   
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
             this.Focus(); // Ensure the page receives keyboard events
@@ -441,12 +444,20 @@ namespace WPF_Torpedo
 
         private void btnDone_Click(object sender, RoutedEventArgs e)
         {
-            // Check if ships have been placed
+            // Check if ships have been placed by this player
             if (placedShips.Count == 5)
             {
-                // All ships placed, navigate to the gameplay page
-                _player.Grid = _grid;
-                _navigator.MoveToPage<Gameplay>();
+                // Mark the player as ready
+                _isPlayerReady = true;
+
+                // Send a "ready" message to the server or other player via a server-managed process
+                SendReadyMessage();
+
+                // Disable the button so the player cannot click it again
+                btnDone.IsEnabled = false;
+
+                // Start listening for the other player's readiness message from the server
+                ListenForOtherPlayerReadiness();
             }
             else
             {
@@ -454,5 +465,78 @@ namespace WPF_Torpedo
                 MessageBox.Show("Please place all ships before proceeding.");
             }
         }
+
+        private void SendReadyMessage()
+        {
+            // Create the ready message
+            string message = "Player " + _player.Username + " is ready!";
+
+            // Send the message to the server or other player via TCP or whatever communication protocol you're using
+            try
+            {
+                // Example using TCP Socket (you may replace this with your own message-sending logic)
+                TcpClient client = new TcpClient(IPAddress.Loopback.ToString(), 5000); // Adjust with actual server details
+                NetworkStream stream = client.GetStream();
+                byte[] data = Encoding.UTF8.GetBytes(message);
+                stream.Write(data, 0, data.Length);
+                stream.Close();
+                client.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error sending ready message: " + ex.Message);
+            }
+        }
+
+        private async void ListenForOtherPlayerReadiness()
+        {
+            try
+            {
+                // Set up a listener to wait for the other player to be ready
+                TcpListener serverListener = new TcpListener(IPAddress.Loopback, 5000); // Use the actual server IP and port
+                serverListener.Start();
+                MessageBox.Show("Waiting for the other player to be ready...");
+
+                // Asynchronously accept incoming connections
+                TcpClient client = await serverListener.AcceptTcpClientAsync();
+                NetworkStream stream = client.GetStream();
+                byte[] buffer = new byte[256]; // Adjust the buffer size based on your message length
+
+                // Read the message asynchronously
+                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+                // Check if the message contains the "ready" status
+                if (message.Contains("is ready"))
+                {
+                    // Update the UI based on the other player's readiness
+                    _otherPlayerIsReady = true;
+                    MessageBox.Show("The other player is ready!");
+                }
+
+                stream.Close();
+                client.Close();
+                serverListener.Stop();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error listening for readiness: " + ex.Message);
+            }
+        }
+        private void CheckBothPlayersReady()
+        {
+            if (_isPlayerReady && _otherPlayerIsReady)
+            {
+                // Both players are ready, proceed to the gameplay phase
+                _player.Grid = _grid;
+                _navigator.MoveToPage<Gameplay>();
+            }
+            else
+            {
+                // Only one player is ready, wait for the other player
+                MessageBox.Show("Waiting for the other player...");
+            }
+        }
+
     }
 }

@@ -10,140 +10,237 @@ namespace Server
 {
     public class Program
     {
-        public static async Task Main()
+        private TcpListener _server;
+        private List<TcpClient> _clients;
+        private List<GameSession> _games;
+        private const int Port = 5000;
+
+        public Program()
         {
-            using IHost _host = Host.CreateDefaultBuilder()
-                                    .ConfigureServices(ConfigureServices)
-                                    .ConfigureLogging(ConfigureLogging)
-                                    .Build();
+            _clients = new List<TcpClient>();
+            _games = new List<GameSession>();
+            _server = new TcpListener(IPAddress.Any, Port);
+        }
 
-            Server server = _host.Services.GetRequiredService<Server>();
+        public void Start()
+        {
+            _server.Start();
+            Console.WriteLine($"Server started on port {Port}");
 
-            Console.CancelKeyPress += async (o, e) =>
+            Task.Run(() => AcceptClientsAsync());
+        }
+
+        private async Task AcceptClientsAsync()
+        {
+            while (true)
             {
-                e.Cancel = true;
-                await _host.StopAsync();
-            };
-            _host.Start();
-            await Task.WhenAny(_host.WaitForShutdownAsync(),server.StartAsync());
+                TcpClient client = await _server.AcceptTcpClientAsync();
+                _clients.Add(client);
+                Console.WriteLine("New client connected");
+
+                Task.Run(() => HandleClientAsync(client));
+            }
         }
 
-        static void ConfigureLogging(HostBuilderContext context, ILoggingBuilder builder)
+        private async Task HandleClientAsync(TcpClient client)
         {
-            builder.ClearProviders();
-            builder.AddConsole();
-            builder.AddDebug();
+            NetworkStream stream = client.GetStream();
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+
+            // Send welcome message
+            SendMessage(stream, "Welcome to Battleship! Waiting for another player...");
+
+            // Wait for the "Ready" message from the player
+            bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+            string readyMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+            if (readyMessage != "Ready")
+            {
+                SendMessage(stream, "You must send 'Ready' to start.");
+                return;
+            }
+
+            Console.WriteLine("Player is ready");
+
+            // Wait until we have two clients
+            if (_clients.Count % 2 == 0)
+            {
+                // Now both players are ready, start the game session
+                var player1 = _clients[_clients.Count - 2];
+                var player2 = _clients[_clients.Count - 1];
+
+                GameSession gameSession = new GameSession(player1, player2);
+                _games.Add(gameSession);
+
+                // Notify both players that the game is starting
+                SendMessage(player1.GetStream(), "Your game has started! You are Player 1.");
+                SendMessage(player2.GetStream(), "Your game has started! You are Player 2.");
+
+                // Start the game loop for this pair of players
+                await StartGameAsync(gameSession);
+            }
+            else
+            {
+                // If there's an odd number of players, don't start a game yet
+                SendMessage(stream, "Waiting for another player...");
+            }
         }
 
-        static void ConfigureServices(HostBuilderContext context, IServiceCollection services)
+        private async Task StartGameAsync(GameSession gameSession)
         {
-            services.AddSingleton<Server>();
+            while (!gameSession.Player1Ready || !gameSession.Player2Ready)
+            {
+                if (!gameSession.Player1Ready)
+                {
+                    // Check Player 1 readiness
+                    NetworkStream player1Stream = gameSession.Player1.GetStream();
+                    byte[] buffer = new byte[1024];
+                    int bytesRead = await player1Stream.ReadAsync(buffer, 0, buffer.Length);
+                    string readyMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                    if (readyMessage == "Ready")
+                    {
+                        gameSession.Player1Ready = true;
+                        SendMessage(player1Stream, "Your opponent is ready. Game starting...");
+                    }
+                    else
+                    {
+                        SendMessage(player1Stream, "Waiting for opponent to be ready...");
+                    }
+                }
+
+                if (!gameSession.Player2Ready)
+                {
+                    // Check Player 2 readiness
+                    NetworkStream player2Stream = gameSession.Player2.GetStream();
+                    byte[] buffer = new byte[1024];
+                    int bytesRead = await player2Stream.ReadAsync(buffer, 0, buffer.Length);
+                    string readyMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                    if (readyMessage == "Ready")
+                    {
+                        gameSession.Player2Ready = true;
+                        SendMessage(player2Stream, "Your opponent is ready. Game starting...");
+                    }
+                    else
+                    {
+                        SendMessage(player2Stream, "Waiting for opponent to be ready...");
+                    }
+                }
+
+                await Task.Delay(1000); // Prevent tight loop
+            }
+
+            // Now both players are ready, start the game loop
+            await PlayGameLoopAsync(gameSession);
+        }
+
+        private async Task PlayGameLoopAsync(GameSession gameSession)
+        {
+            // Start alternating turns between players
+            while (!gameSession.IsGameOver)
+            {
+                // Wait for Player 1's turn
+                await HandlePlayerTurnAsync(gameSession, gameSession.Player1, gameSession.Player2);
+
+                // Check if the game is over    
+                if (gameSession.IsGameOver)
+                    break;
+
+                // Wait for Player 2's turn
+                await HandlePlayerTurnAsync(gameSession, gameSession.Player2, gameSession.Player1);
+            }
+
+            // End of game
+            SendMessage(gameSession.Player1.GetStream(), "Game Over!");
+            SendMessage(gameSession.Player2.GetStream(), "Game Over!");
+
+            // Cleanup after the game
+            _games.Remove(gameSession);
+            gameSession.Player1.Close();
+            gameSession.Player2.Close();
+        }
+
+        private async Task HandlePlayerTurnAsync(GameSession gameSession, TcpClient currentPlayer, TcpClient opponent)
+        {
+            NetworkStream currentPlayerStream = currentPlayer.GetStream();
+            NetworkStream opponentStream = opponent.GetStream();
+            byte[] buffer = new byte[1024];
+
+            // Send prompt for player's move
+            SendMessage(currentPlayerStream, "Your turn! Please send attack coordinates (x,y):");
+
+            int bytesRead = await currentPlayerStream.ReadAsync(buffer, 0, buffer.Length);
+            string attackMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+            string[] coords = attackMessage.Split(',');
+
+            if (coords.Length != 2 || !int.TryParse(coords[0], out int x) || !int.TryParse(coords[1], out int y))
+            {
+                SendMessage(currentPlayerStream, "Invalid coordinates. Please try again.");
+                return;
+            }
+
+            // Handle the attack on opponent's grid (this would be more complex in a real game)
+            bool isHit = CheckIfHit(x, y, opponent);
+
+            // Send feedback to current player
+            SendMessage(currentPlayerStream, isHit ? "Hit!" : "Miss!");
+
+            // Send feedback to opponent
+            SendMessage(opponentStream, $"{(isHit ? "Hit" : "Miss")} on your grid at ({x},{y})");
+
+            // Check if the opponent's ships are all sunk and if the game is over
+            if (IsGameOver(opponent))
+            {
+                gameSession.IsGameOver = true;
+            }
+        }
+
+        private bool CheckIfHit(int x, int y, TcpClient opponent)
+        {
+            // Dummy logic to determine if it's a hit
+            // In a real game, this would check the opponent's ship placements
+            return new Random().Next(0, 2) == 0; // Randomly return hit or miss
+        }
+
+        private bool IsGameOver(TcpClient opponent)
+        {
+            // Check if opponent has lost all their ships
+            // For simplicity, assume the game ends when the opponent has no ships left
+            return new Random().Next(0, 2) == 0; // Randomly decide if the game is over
+        }
+
+        private void SendMessage(NetworkStream stream, string message)
+        {
+            byte[] buffer = Encoding.UTF8.GetBytes(message);
+            stream.Write(buffer, 0, buffer.Length);
+        }
+
+        public static void Main(string[] args)
+        {
+            Program server = new Program();
+            server.Start();
+
+            // Keep the server running
+            Console.ReadLine();
         }
     }
 
-    public class Server
+
+    public class GameSession
     {
-        private readonly TcpListener _listener;
-        private readonly ILogger<Server> _logger;
+        public TcpClient Player1 { get; }
+        public TcpClient Player2 { get; }
+        public bool IsGameOver { get; set; }
+        public bool Player1Ready { get; set; }
+        public bool Player2Ready { get; set; }
 
-
-        private const string ADDRESS = "127.0.0.1";
-        private const int PORT = 37065;
-        // List to store all clients 
-        readonly List<TcpClient> _clients;
-
-        public Server(ILogger<Server> logger)
+        public GameSession(TcpClient player1, TcpClient player2)
         {
-            _listener = new TcpListener(IPAddress.Parse(ADDRESS), PORT);
-            _clients = new List<TcpClient>();
-            _logger = logger;
-        }
-
-      public async Task StartAsync()
-        {
-            _listener.Start();
-            _logger.Log(LogLevel.Information, "Server is running at {Address}:{Port}", ADDRESS, PORT);
-            TcpClient? client = null;
-            while (true)
-            {
-                client = await _listener.AcceptTcpClientAsync();
-                lock (_clients)
-                {
-                    _clients.Add(client);
-                    _logger.Log(LogLevel.Information, "Client connected, total clients: {clientCount}", _clients.Count);
-                }
-                await WaitForConnectingPairAsync(client);
-            }
-        }
-        async Task WaitForConnectingPairAsync(TcpClient client)
-
-        {
-            while (client.Connected)
-            {
-                await client.GetStream().WriteAsync(Encoding.UTF8.GetBytes("1"));
-                if ((_clients.Count & 1) == 0) // Every second client forms a pair
-                {
-                    TcpClient first = _clients[_clients.Count - 2];
-                    TcpClient second = _clients[_clients.Count - 1];
-                    Thread thread = new(() => HandleClientPair(first, second));
-                    thread.Start();
-                    break; // Pair found, start communication
-                }
-                await Task.Delay(100); // Check periodically for a pair
-            }
-
-
-            // Client disconnected without a pair
-            lock (_clients)
-            {
-                _clients.Remove(client);
-            }
-            _logger.LogWarning("Client without a pair disconnected");
-            await Task.CompletedTask;
-
-        }
-
-        void HandleClientPair(TcpClient first, TcpClient second)
-        {
-            using (first)
-            using (second)
-            {
-                NetworkStream stream_1 = first.GetStream(), stream_2 = second.GetStream();
-                byte[] firstBuffer = new byte[1024], secondBuffer = new byte[1024];
-                int bytesRead_1, bytesRead_2;
-
-                while (true)
-                {
-                    bytesRead_1 = stream_1.Read(firstBuffer, 0, firstBuffer.Length);
-                    if (bytesRead_1 == 0)
-                    {
-                        _logger.LogWarning("Client 1 sent 0 bytes as message, closing the connection.");
-                        break;
-                    }
-                    _logger.LogInformation("Client 1 sent: {Message}", Encoding.UTF8.GetString(firstBuffer, 0, bytesRead_1));
-                    stream_2.Write(firstBuffer, 0, bytesRead_1);
-
-                    bytesRead_2 = stream_2.Read(secondBuffer, 0, secondBuffer.Length);
-                    if (bytesRead_2 == 0)
-                    {
-                        _logger.LogWarning("Client 2 sent 0 bytes as message, closing the connection.");
-                        break;
-                    }
-                    _logger.LogInformation("Client 2 sent: {Message}", Encoding.UTF8.GetString(secondBuffer, 0, bytesRead_2));
-                    stream_1.Write(secondBuffer, 0, bytesRead_2);
-                }
-            }
-
-            // Remove clients from the list once they disconnect
-            lock (_clients)
-            {
-
-                _logger.LogInformation("Removing clients....");
-                // Remove both clients when they are disconnected
-                _clients.RemoveAll(x => x == first || x == second);
-            }
-
-            _logger.Log(LogLevel.Information, "Client pair disconnected.");
+            Player1 = player1;
+            Player2 = player2;
+            IsGameOver = false;
+            Player1Ready = false;
+            Player2Ready = false;
         }
     }
 }
