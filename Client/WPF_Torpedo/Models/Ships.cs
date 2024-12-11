@@ -97,11 +97,25 @@ namespace WPF_Torpedo.Models
                 new Position {X = 4, Y = 0}
             ],
             [
-               new Position {},
-               new Position {},
-               new Position {},
-               new Position {},
-               new Position {},
+               new Position {X = 0, Y = 0},
+               new Position {X = 0, Y = 1},
+               new Position {X = 0, Y = 2},
+               new Position {X = 0, Y = 3},
+               new Position {X = 0, Y = 4},
+            ],
+            [
+                new Position {X = 0, Y = 0},
+                new Position {X = 1, Y = 0},
+                new Position {X = 2, Y = 0},
+                new Position {X = 3, Y = 0},
+                new Position {X = 4, Y = 0}
+            ],
+            [
+               new Position {X = 0, Y = 0},
+               new Position {X = 0, Y = 1},
+               new Position {X = 0, Y = 2},
+               new Position {X = 0, Y = 3},
+               new Position {X = 0, Y = 4},
             ]
         ];
 
@@ -123,6 +137,26 @@ namespace WPF_Torpedo.Models
                 new Position {X = 1, Y = 0},
                 new Position {X = 2, Y = 0},
                 new Position {X = 3, Y = 0},
+            ],
+            [
+                new Position {X = 0, Y = 0},
+                new Position {X = 0, Y = 1},
+                new Position {X = 0, Y = 2},
+                new Position {X = 0, Y = 3},
+
+            ],
+            [
+                new Position {X = 0, Y = 0},
+                new Position {X = 1, Y = 0},
+                new Position {X = 2, Y = 0},
+                new Position {X = 3, Y = 0},
+            ],
+            [
+                new Position {X = 0, Y = 0},
+                new Position {X = 0, Y = 1},
+                new Position {X = 0, Y = 2},
+                new Position {X = 0, Y = 3},
+
             ]
 
         ];

@@ -20,6 +20,7 @@ namespace WPF_Torpedo
             collection.AddSingleton<Player>();
             collection.AddSingleton<MainWindow>();
             collection.AddSingleton<MainMenu>();
+            collection.AddSingleton<List<ShipPlacement>>();
             collection.AddSingleton<IPageNavigator, PageNavigator>();
             collection.AddSingleton<Func<Type, Page>>(provider => page => (Page)provider.GetRequiredService(page));
             collection.AddSingleton<CreateTable>();

@@ -19,7 +19,7 @@ namespace WPF_Torpedo
         private string draggedShip; // Húzott hajó neve
         private int draggedShipSize; // Húzott hajó mérete
         private bool isVertical = false; // Hajó orientáció (false = vízszintes, true = függőleges)
-        private List<ShipPlacement> placedShips = new List<ShipPlacement>();
+        private List<ShipPlacement> placedShips;
         private Player _player;
         private IPageNavigator _navigator;
 
@@ -33,10 +33,11 @@ namespace WPF_Torpedo
                 { "Destroyer", 1 }
             };
 
-        public CreateTable(Player player, IPageNavigator navigator)
+        public CreateTable(Player player, IPageNavigator navigator, List<ShipPlacement> placement)
         {
             InitializeComponent();
             GenerateGrid();
+            placedShips = placement;
             _player = player;
             _navigator = navigator; 
         }
@@ -317,6 +318,7 @@ namespace WPF_Torpedo
                                 break;
                         }
                         _grid.PlaceShip(_selectedShip);
+                        _selectedShip = null;
                     }
                     else
                     {

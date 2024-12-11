@@ -27,12 +27,11 @@ namespace WPF_Torpedo.Pages
         GameGrid _eGrid;
 
 
-        public Gameplay(IPageNavigator navigator, TcpClient client, List<ShipPlacement> placedShips, Player player)
+        public Gameplay(IPageNavigator navigator,  List<ShipPlacement> placedShips, Player player)
         {
             InitializeComponent();
             this.placedShips = placedShips;
             _navigator = navigator;
-            _client = client;
             _player = player;
             _player.SendInfoToServer();
             StartListeningForMessages();
@@ -51,15 +50,7 @@ namespace WPF_Torpedo.Pages
         {
             try
             {
-                if (_client != null)
-                {
-                    _client.Close();
-                    _client.Dispose();
-                }
-                if (_stream != null)
-                {
-                    _stream.Close();
-                }
+                _player.Stream.Dispose();
             }
             catch (Exception ex)
             {
@@ -229,9 +220,9 @@ namespace WPF_Torpedo.Pages
             {
                 byte[] buffer = new byte[1024];
 
-                while (_client.Connected)
+                while (_player.Stream != null)
                 {
-                    int bytesRead = await _stream.ReadAsync(buffer);
+                    int bytesRead = await _player.Stream.ReadAsync(buffer);
                     if (bytesRead > 0)
                     {
                         string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);

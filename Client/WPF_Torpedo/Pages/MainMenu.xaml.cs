@@ -35,20 +35,6 @@ namespace WPF_Torpedo.Pages
             _player = player;
         }
 
-        private void ConnectToServer()
-        {
-            try
-            {
-                client = new TcpClient();
-                client.Connect("127.0.0.1", 37065);
-                MessageBox.Show("Successfully connected to the server!");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to connect to the server: {ex.Message}");
-            }
-        }
-
         private void btnStartGame_Click(object sender, RoutedEventArgs e)
         {
             if (txtPlayerName.Text.Length == 0)

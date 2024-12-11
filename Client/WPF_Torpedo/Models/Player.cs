@@ -11,7 +11,7 @@ namespace WPF_Torpedo.Models
 {
     public class Player
     {
-        private GameGrid _grid;
+        private GameGrid _grid = new();
         private readonly TcpClient _client = new();
         public NetworkStream Stream => _client.GetStream();
         public GameGrid Grid {get => _grid; set => _grid = value; } 
@@ -19,7 +19,7 @@ namespace WPF_Torpedo.Models
 
         public void ConnectToServer()
         {
-            _client.Connect(IPAddress.Loopback, 5500);
+            _client.Connect(IPAddress.Loopback, 37065);
             if (_client.Connected) 
             {
                 SendInfoToServer();
