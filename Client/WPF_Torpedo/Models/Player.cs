@@ -21,10 +21,6 @@ namespace WPF_Torpedo.Models
         public void ConnectToServer()
         {
             _client.Connect(IPAddress.Loopback, 5000);
-            if (_client.Connected) 
-            {
-                SendInfoToServer();
-            }
         }
         public void SendInfoToServer()
         {
@@ -36,7 +32,7 @@ namespace WPF_Torpedo.Models
         // this is utter garbage
         public void SendFireTo(int x, int y)
         {
-            byte[] buffer = Encoding.UTF8.GetBytes($"Attack,{x},{y}");
+            byte[] buffer = Encoding.UTF8.GetBytes($"{x},{y}");
             Stream.Write( buffer, 0, buffer.Length );
         }
         public void RecieveFire(int x, int y)

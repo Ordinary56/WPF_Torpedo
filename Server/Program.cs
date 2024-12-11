@@ -55,7 +55,7 @@ namespace Server
             bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
             string readyMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
-            if (readyMessage != "Ready")
+            if (!readyMessage.Contains("is ready"))
             {
                 SendMessage(stream, "You must send 'Ready' to start.");
                 return;
@@ -89,19 +89,20 @@ namespace Server
 
         private async Task StartGameAsync(GameSession gameSession)
         {
+            NetworkStream player1Stream = gameSession.Player1.GetStream(), player2Stream = gameSession.Player2.GetStream();
+            Stack<bool> readyStack = new();
             while (!gameSession.Player1Ready || !gameSession.Player2Ready)
             {
                 if (!gameSession.Player1Ready)
                 {
                     // Check Player 1 readiness
-                    NetworkStream player1Stream = gameSession.Player1.GetStream();
                     byte[] buffer = new byte[1024];
                     int bytesRead = await player1Stream.ReadAsync(buffer, 0, buffer.Length);
                     string readyMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                    if (readyMessage == "Ready")
+                    if (readyMessage.Contains("is ready"))
                     {
                         gameSession.Player1Ready = true;
-                        SendMessage(player1Stream, "Your opponent is ready. Game starting...");
+                        readyStack.Push(true);
                     }
                     else
                     {
@@ -112,19 +113,24 @@ namespace Server
                 if (!gameSession.Player2Ready)
                 {
                     // Check Player 2 readiness
-                    NetworkStream player2Stream = gameSession.Player2.GetStream();
                     byte[] buffer = new byte[1024];
                     int bytesRead = await player2Stream.ReadAsync(buffer, 0, buffer.Length);
                     string readyMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                    if (readyMessage == "Ready")
+                    if (readyMessage.Contains("is ready"))
                     {
                         gameSession.Player2Ready = true;
-                        SendMessage(player2Stream, "Your opponent is ready. Game starting...");
+                        readyStack.Push(true);
                     }
                     else
                     {
                         SendMessage(player2Stream, "Waiting for opponent to be ready...");
                     }
+                }
+                if (readyStack.Count == 2)
+                {
+                        SendMessage(player2Stream, "Other is Ready");
+                        SendMessage(player1Stream, "Other is Ready");
+                        break;
                 }
 
                 await Task.Delay(1000); // Prevent tight loop

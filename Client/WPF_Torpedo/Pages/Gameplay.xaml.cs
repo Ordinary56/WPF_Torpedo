@@ -87,7 +87,7 @@ namespace WPF_Torpedo.Pages
                     };
 
                     // MouseLeave event to reset color
-                    border.MouseLeave += (s, e) =>
+                    border.MouseEnter += (s, e) =>
                     {
                         if (border.Background == Brushes.LightBlue)
                         {

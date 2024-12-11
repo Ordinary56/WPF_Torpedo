@@ -289,7 +289,6 @@ namespace WPF_Torpedo
 
                         // Decrease the ship count
                         shipsCount[shipName]--;
-                        MessageBox.Show($"{shipName} successfully placed!");
 
                         // Add the ship's details to the placedShips list
                         placedShips.Add(new ShipPlacement(shipName, row, col, draggedShipSize, isVertical));
@@ -450,8 +449,6 @@ namespace WPF_Torpedo
                 // Mark the player as ready
                 _isPlayerReady = true;
 
-                // Send a "ready" message to the server or other player via a server-managed process
-                SendReadyMessage();
 
                 // Disable the button so the player cannot click it again
                 btnDone.IsEnabled = false;
@@ -475,12 +472,8 @@ namespace WPF_Torpedo
             try
             {
                 // Example using TCP Socket (you may replace this with your own message-sending logic)
-                TcpClient client = new TcpClient(IPAddress.Loopback.ToString(), 5000); // Adjust with actual server details
-                NetworkStream stream = client.GetStream();
                 byte[] data = Encoding.UTF8.GetBytes(message);
-                stream.Write(data, 0, data.Length);
-                stream.Close();
-                client.Close();
+                _player.Stream.Write(data, 0, data.Length);
             }
             catch (Exception ex)
             {
@@ -490,52 +483,30 @@ namespace WPF_Torpedo
 
         private async void ListenForOtherPlayerReadiness()
         {
-            try
+            while (!BothPlayersReady())
             {
-                // Set up a listener to wait for the other player to be ready
-                TcpListener serverListener = new TcpListener(IPAddress.Loopback, 5000); // Use the actual server IP and port
-                serverListener.Start();
-                MessageBox.Show("Waiting for the other player to be ready...");
-
-                // Asynchronously accept incoming connections
-                TcpClient client = await serverListener.AcceptTcpClientAsync();
-                NetworkStream stream = client.GetStream();
-                byte[] buffer = new byte[256]; // Adjust the buffer size based on your message length
-
+                // Send a "ready" message to the server or other player via a server-managed process
+                SendReadyMessage();
+                byte[] buffer = new byte[1028];
                 // Read the message asynchronously
-                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                int bytesRead = await _player.Stream.ReadAsync(buffer);
                 string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-
                 // Check if the message contains the "ready" status
-                if (message.Contains("is ready"))
+                if (message.Contains("Other is Ready"))
                 {
                     // Update the UI based on the other player's readiness
                     _otherPlayerIsReady = true;
-                    MessageBox.Show("The other player is ready!");
                 }
+            }
+            PrepareGameplay();
 
-                stream.Close();
-                client.Close();
-                serverListener.Stop();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error listening for readiness: " + ex.Message);
-            }
         }
-        private void CheckBothPlayersReady()
+        private bool BothPlayersReady() => _isPlayerReady && _otherPlayerIsReady;
+        private void PrepareGameplay()
         {
-            if (_isPlayerReady && _otherPlayerIsReady)
-            {
                 // Both players are ready, proceed to the gameplay phase
                 _player.Grid = _grid;
                 _navigator.MoveToPage<Gameplay>();
-            }
-            else
-            {
-                // Only one player is ready, wait for the other player
-                MessageBox.Show("Waiting for the other player...");
-            }
         }
 
     }
